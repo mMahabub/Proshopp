@@ -191,6 +191,7 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-106: Email verification system with Resend
 - ✅ TASK-107: Password reset flow with email tokens
 - ✅ TASK-108: Header auth state with user dropdown
+- ✅ TASK-201: Cart database models (Cart and CartItem)
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -1377,10 +1378,59 @@ emails/                     # React Email templates
 types/                      # Additional TypeScript types (cart, order)
 ```
 
-### Database Schema Additions
+### Database Schema
+
+#### Current Models
+
+**Shopping Cart (TASK-201):**
+```prisma
+model Cart {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@index([userId])
+}
+
+model CartItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cartId    String   @db.Uuid
+  productId String   @db.Uuid
+  quantity  Int      @default(1)
+  price     Decimal  @db.Decimal(12, 2)  // Snapshot of price at time of adding
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])  // One product per cart
+  @@index([cartId])
+  @@index([productId])
+}
+```
+
+**Features:**
+- ✅ One-to-one relationship between User and Cart (each user has one cart)
+- ✅ Cart items link to both Cart and Product
+- ✅ Price snapshot stored in CartItem (preserves price at time of adding)
+- ✅ Unique constraint prevents duplicate products in same cart
+- ✅ Cascade delete removes cart when user deleted
+- ✅ Cascade delete removes cart items when cart or product deleted
+- ✅ Indexes for performance on foreign keys
+
+**Migration:**
+```bash
+npx prisma migrate dev --name add_cart_models
+# Applied: 20251005220902_add_cart_models
+```
 
 #### Planned Models (See spec.md)
-1. **Cart & CartItem** - Shopping cart with items
+1. ✅ **Cart & CartItem** - Shopping cart with items (COMPLETED)
 2. **Order & OrderItem** - Orders with item snapshots
 3. **Review** - Product reviews and ratings
 4. **Category** (optional) - Product categories
@@ -1390,6 +1440,7 @@ types/                      # Additional TypeScript types (cart, order)
 - Always test locally before production
 - Use `npx prisma migrate dev --name descriptive_name`
 - Update seed data after schema changes
+- Verify with `npx prisma migrate status` and `npx prisma validate`
 
 ### Development Workflow
 
