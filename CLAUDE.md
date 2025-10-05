@@ -24,7 +24,67 @@ npx prisma db push          # Push schema changes to database
 npx prisma migrate dev      # Create and apply migrations
 npx prisma studio           # Open Prisma Studio GUI
 npx tsx db/seed.ts          # Seed database with sample data
+npx prisma migrate status   # Check migration status
+npx prisma validate         # Validate Prisma schema
 ```
+
+### 🔴 Database Migration Verification (MANDATORY)
+
+**After running ANY database migration, you MUST verify the changes in the actual database:**
+
+1. **Run the migration:**
+   ```bash
+   npx prisma migrate dev --name descriptive_migration_name
+   ```
+
+2. **Verify migration status:**
+   ```bash
+   npx prisma migrate status
+   # Should show: "Database schema is up to date!"
+   ```
+
+3. **Validate schema:**
+   ```bash
+   npx prisma validate
+   # Should show: "The schema at prisma/schema.prisma is valid"
+   ```
+
+4. **Connect to database and verify changes:**
+   ```bash
+   npx prisma studio
+   # OR use the database connection string to connect directly
+   ```
+
+5. **Manual database inspection:**
+   - Open Prisma Studio (`npx prisma studio`)
+   - Verify new tables/columns exist
+   - Check data types match schema
+   - Verify indexes and constraints are created
+   - Test relationships if applicable
+
+6. **Alternative: Direct SQL verification:**
+   ```bash
+   # Connect using the DATABASE_URL from .env
+   # For Neon: Use their web console or psql client
+   # Verify schema changes with SQL queries:
+   \dt                           # List all tables
+   \d table_name                 # Describe specific table
+   SELECT * FROM table_name;     # Test query
+   ```
+
+**⚠️ CRITICAL: Do not mark migration task as complete until:**
+- ✅ Migration files committed to git
+- ✅ `npx prisma migrate status` shows clean state
+- ✅ `npx prisma validate` passes
+- ✅ Prisma Studio shows new schema changes
+- ✅ Manual verification in database confirms changes
+- ✅ All automated checks pass (TypeScript, lint, tests, build)
+
+**Common Migration Issues:**
+- Migration applied but schema not updated → Run `npx prisma generate`
+- Database out of sync → Check `npx prisma migrate status`
+- Migration conflicts → Resolve manually or reset dev database
+- Changes not visible → Clear Prisma Studio cache, refresh connection
 
 ## Architecture
 
