@@ -426,21 +426,54 @@ npm run build             # ✅ Production build succeeds
 **If ANY check fails, task is NOT complete. Fix and re-run.**
 
 #### Step 3: Manual Validation (For UI Changes)
-Use Playwright MCP to verify:
-- **Screenshots**: Capture before/after UI state
-- **Console Logs**: Check for errors/warnings
-- **Network Activity**: Verify API calls
-- **Storage**: Inspect cookies, session, localStorage
-- **Visual Verification**: Confirm UI matches requirements
+
+**🔴 CRITICAL: Clean Environment Protocol (MANDATORY)**
+
+Before EVERY manual validation with Playwright:
+
+```bash
+# 1. Kill any process on port 3000
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+
+# 2. Kill any npm dev processes
+pkill -f "npm run dev" 2>/dev/null || true
+
+# 3. Close browser (use Playwright MCP)
+# Use: mcp__playwright__browser_close
+
+# 4. Start fresh dev server on port 3000 (NOT 3001 or any other port)
+npm run dev
+
+# 5. Wait for server to be ready (check for "Ready in..." message)
+
+# 6. Open fresh browser window with Playwright
+# Use: mcp__playwright__browser_navigate with http://localhost:3000
+```
+
+**⚠️ NEVER use ports other than 3000 for Playwright validation**
+- If port 3000 is in use, kill the process first
+- Always ensure clean state before validation
+- Fresh browser = accurate validation results
+
+**Playwright MCP Validation Checklist:**
+- ✅ **Screenshots**: Capture before/after UI state
+- ✅ **Console Logs**: Check for errors/warnings (onlyErrors: true)
+- ✅ **Network Activity**: Verify API calls and resource loading
+- ✅ **Storage**: Inspect cookies, session, localStorage (if applicable)
+- ✅ **Visual Verification**: Confirm UI matches requirements
+- ✅ **User Interactions**: Test clicks, forms, navigation
 
 ```bash
 # Example Playwright verification flow:
-1. Navigate to affected page
-2. Take screenshot
-3. Check console for errors
-4. Verify network requests
-5. Inspect storage state
-6. Validate user interactions
+1. Clean environment (kill processes, close browser)
+2. Start dev server on port 3000
+3. Navigate to affected page (http://localhost:3000/...)
+4. Take screenshot (mcp__playwright__browser_take_screenshot)
+5. Check console for errors (mcp__playwright__browser_console_messages)
+6. Verify network requests (mcp__playwright__browser_network_requests)
+7. Inspect storage state (if needed)
+8. Validate user interactions (clicks, forms, etc.)
+9. Capture final screenshot
 ```
 
 #### Step 4: Complex Task Analysis
