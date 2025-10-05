@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuContent, DropdownMenuRadioItem, DropdownMenuRadioGroup } from "@radix-ui/react-dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuContent, DropdownMenuRadioItem, DropdownMenuRadioGroup } from "@/components/ui/dropdown-menu";
 import { useTheme } from "next-themes";
 import { SunIcon, MoonIcon, SunMoon } from "lucide-react";
 
