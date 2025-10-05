@@ -192,6 +192,7 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-107: Password reset flow with email tokens
 - ✅ TASK-108: Header auth state with user dropdown
 - ✅ TASK-201: Cart database models (Cart and CartItem)
+- ✅ TASK-202: Zustand cart store with localStorage persistence
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -616,13 +617,164 @@ describe('SignInForm', () => {
 })
 ```
 
-#### State Management (Zustand)
-- **Installation**: `npm install zustand`
-- **Stores**:
-  - `lib/store/cart-store.ts` - Cart state with localStorage persistence
-  - Actions: addItem, removeItem, updateQuantity, clearCart
-  - Getters: getTotal, getItemCount
-- **Pattern**: Client-side state for cart, server state via Server Components
+#### State Management (Zustand) - ✅ IMPLEMENTED
+
+**Cart Store (TASK-202):**
+
+**Installation:**
+```bash
+npm install zustand
+```
+
+**Cart Types (`types/cart.ts`):**
+```typescript
+export interface CartItem {
+  id: string
+  name: string
+  slug: string
+  price: number
+  quantity: number
+  image: string
+  stock: number
+}
+
+export interface CartState {
+  items: CartItem[]
+  addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void
+  removeItem: (productId: string) => void
+  updateQuantity: (productId: string, quantity: number) => void
+  clearCart: () => void
+  getTotal: () => number
+  getItemCount: () => number
+}
+```
+
+**Cart Store Implementation (`lib/store/cart-store.ts`):**
+```typescript
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+import type { CartState } from '@/types/cart'
+
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+
+      addItem: (item, quantity = 1) => {
+        set((state) => {
+          const existingItem = state.items.find((i) => i.id === item.id)
+
+          if (existingItem) {
+            // Update quantity if item already exists
+            return {
+              items: state.items.map((i) =>
+                i.id === item.id
+                  ? { ...i, quantity: i.quantity + quantity }
+                  : i
+              ),
+            }
+          }
+
+          // Add new item
+          return {
+            items: [...state.items, { ...item, quantity }],
+          }
+        })
+      },
+
+      removeItem: (productId) => {
+        set((state) => ({
+          items: state.items.filter((i) => i.id !== productId),
+        }))
+      },
+
+      updateQuantity: (productId, quantity) => {
+        set((state) => {
+          if (quantity <= 0) {
+            // Remove item if quantity is 0 or negative
+            return {
+              items: state.items.filter((i) => i.id !== productId),
+            }
+          }
+
+          return {
+            items: state.items.map((i) =>
+              i.id === productId ? { ...i, quantity } : i
+            ),
+          }
+        })
+      },
+
+      clearCart: () => {
+        set({ items: [] })
+      },
+
+      getTotal: () => {
+        const { items } = get()
+        return items.reduce((total, item) => total + item.price * item.quantity, 0)
+      },
+
+      getItemCount: () => {
+        const { items } = get()
+        return items.reduce((count, item) => count + item.quantity, 0)
+      },
+    }),
+    {
+      name: 'cart-storage',
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+)
+```
+
+**Features:**
+- ✅ Client-side state management with Zustand
+- ✅ localStorage persistence (survives page reloads)
+- ✅ Automatic quantity increment for existing items
+- ✅ Auto-remove items when quantity set to 0
+- ✅ Real-time total and item count calculation
+- ✅ TypeScript type safety
+- ✅ Optimistic UI updates
+
+**Usage in Components:**
+```typescript
+'use client'
+
+import { useCartStore } from '@/lib/store/cart-store'
+
+export default function ProductCard({ product }) {
+  const { addItem } = useCartStore()
+
+  const handleAddToCart = () => {
+    addItem({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      price: Number(product.price),
+      image: product.images[0],
+      stock: product.stock,
+    }, 1)
+  }
+
+  return (
+    <button onClick={handleAddToCart}>Add to Cart</button>
+  )
+}
+```
+
+**Testing:**
+```typescript
+// 20 comprehensive tests covering:
+// - Adding items (new and existing)
+// - Removing items
+// - Updating quantities (including auto-remove on 0)
+// - Clearing cart
+// - Calculating totals
+// - Counting items
+// All tests passing
+```
+
+**Pattern:** Client-side state for cart, server state via Server Components
 
 #### Payment Integration (Stripe)
 - **Installation**: `npm install stripe @stripe/stripe-js @stripe/react-stripe-js`
@@ -1364,6 +1516,9 @@ __tests__/lib/validations/             # Validation schema tests ✅
 __tests__/lib/utils/                   # Email utility tests ✅
 __tests__/components/auth/             # Auth component tests ✅
 __tests__/components/shared/header/    # Header component tests ✅
+lib/store/cart-store.ts                # Zustand cart store with localStorage ✅
+types/cart.ts                          # Cart type definitions ✅
+__tests__/lib/store/                   # Cart store tests ✅
 ```
 
 **Pending Directories:**
@@ -1372,10 +1527,8 @@ app/(dashboard)/             # User dashboard (profile, orders, addresses)
 app/(admin)/                # Admin panel (dashboard, products, orders, users)
 app/api/uploadthing/        # File upload route
 app/api/webhooks/           # Stripe webhooks
-lib/store/                  # Zustand stores
 lib/hooks/                  # Custom React hooks
 emails/                     # React Email templates
-types/                      # Additional TypeScript types (cart, order)
 ```
 
 ### Database Schema
