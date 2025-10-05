@@ -612,11 +612,115 @@ npx auth secret                     # Generate secret
 # Stripe
 stripe listen --forward-to localhost:3000/api/webhooks/stripe
 
+# Ngrok (Stripe Webhook Forwarding)
+# ⚠️ IMPORTANT: This project uses ngrok for Stripe webhooks, NOT Stripe CLI
+# Ngrok URL: https://uninflected-harper-savable.ngrok-free.dev
+# See "Ngrok Setup for Stripe Webhooks" section below for details
+
 # E2E Testing (Phase 9)
 npm run test:e2e                   # Run E2E tests
 npx playwright test                # Run Playwright tests
 npx lighthouse http://localhost:3000  # Performance audit
 ```
+
+### 🔴 Ngrok Setup for Stripe Webhooks (CRITICAL)
+
+**⚠️ IMPORTANT: This project uses ngrok to expose localhost to Stripe for webhook testing.**
+
+#### Current Configuration
+- **Ngrok Public URL**: `https://uninflicted-harper-savable.ngrok-free.dev`
+- **Local Port**: `3000` (Next.js dev server)
+- **Webhook Endpoint**: `https://uninflicted-harper-savable.ngrok-free.dev/api/webhooks/stripe`
+- **Webhook Secret**: Set in `.env` as `STRIPE_WEBHOOK_SECRET`
+
+#### Why Ngrok Instead of Stripe CLI?
+- Provides a stable public URL for Stripe to send webhook events
+- Works across development sessions
+- Easier to configure in Stripe Dashboard
+- No need to keep `stripe listen` running
+
+#### Setup Steps (Already Completed)
+
+1. **Install ngrok** (if not already installed):
+   ```bash
+   brew install ngrok
+   ```
+
+2. **Start ngrok tunnel** (keep running during development):
+   ```bash
+   ngrok http 3000
+   ```
+
+3. **Configure Stripe Dashboard**:
+   - Go to: https://dashboard.stripe.com/test/webhooks
+   - Add endpoint: `https://uninflicted-harper-savable.ngrok-free.dev/api/webhooks/stripe`
+   - Select events:
+     - `payment_intent.succeeded`
+     - `payment_intent.payment_failed`
+     - `checkout.session.completed`
+   - Copy webhook signing secret to `.env` as `STRIPE_WEBHOOK_SECRET`
+
+4. **Start dev server**:
+   ```bash
+   npm run dev
+   ```
+
+#### Important Notes
+
+**⚠️ DO NOT:**
+- Change the ngrok URL without updating Stripe Dashboard webhook endpoint
+- Use `stripe listen` command (conflicts with ngrok setup)
+- Commit the webhook secret to git
+- Use a different port other than 3000
+
+**✅ DO:**
+- Keep ngrok running in a separate terminal during development
+- Ensure dev server is running on port 3000
+- Verify webhook secret matches in both `.env` and Stripe Dashboard
+- Test webhooks after any changes to the endpoint
+
+#### Troubleshooting
+
+**Webhooks not received:**
+1. Check ngrok is running: Visit `http://localhost:4040` (ngrok dashboard)
+2. Verify dev server is running on port 3000
+3. Check Stripe Dashboard webhook logs
+4. Ensure webhook secret in `.env` matches Stripe Dashboard
+
+**Ngrok URL changed:**
+1. Update Stripe Dashboard webhook endpoint with new ngrok URL
+2. No need to change webhook secret unless you recreate the endpoint
+
+**Port conflicts:**
+1. Kill any process on port 3000: `lsof -ti:3000 | xargs kill -9`
+2. Restart ngrok: `ngrok http 3000`
+3. Restart dev server: `npm run dev`
+
+#### Development Workflow
+
+```bash
+# Terminal 1: Start ngrok
+ngrok http 3000
+
+# Terminal 2: Start dev server
+npm run dev
+
+# Terminal 3: Development work
+# ... your coding ...
+
+# Test webhook:
+# Go to Stripe Dashboard → Webhooks → Send test webhook
+```
+
+#### Production Setup (Future)
+
+For production deployment:
+1. Update Stripe Dashboard webhook endpoint to production URL
+2. Generate new webhook secret for production
+3. Add production webhook secret to production environment variables
+4. Remove ngrok dependency
+
+---
 
 ### Resources
 
@@ -628,3 +732,4 @@ npx lighthouse http://localhost:3000  # Performance audit
 - [Prisma Docs](https://www.prisma.io/docs)
 - [Stripe Docs](https://stripe.com/docs)
 - [shadcn/ui](https://ui.shadcn.com)
+- [Ngrok Docs](https://ngrok.com/docs)
