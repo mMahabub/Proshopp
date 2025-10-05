@@ -2,7 +2,12 @@
 
 import { signIn, signOut } from '@/auth'
 import { prisma } from '@/db/prisma'
-import { signUpSchema, signInSchema } from '@/lib/validations/auth'
+import {
+  signUpSchema,
+  signInSchema,
+  emailSchema,
+  resetPasswordSchema,
+} from '@/lib/validations/auth'
 import { hashSync } from 'bcrypt-ts-edge'
 import { AuthError } from 'next-auth'
 import {
@@ -10,6 +15,9 @@ import {
   sendVerificationEmail,
   verifyToken,
   resendVerificationEmail,
+  createPasswordResetToken,
+  sendPasswordResetEmail,
+  verifyPasswordResetToken,
 } from '@/lib/utils/email'
 
 // Helper to check if error is a redirect
@@ -227,6 +235,150 @@ export async function resendVerification(email: string) {
     return {
       success: false,
       message: 'Failed to resend verification email.',
+    }
+  }
+}
+
+// Request password reset (forgot password)
+export async function requestPasswordReset(
+  prevState: unknown,
+  formData: FormData
+) {
+  try {
+    // Extract and validate email
+    const data = {
+      email: formData.get('email') as string,
+    }
+
+    const validatedData = emailSchema.parse(data)
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { email: validatedData.email },
+    })
+
+    // For security, always return success even if user doesn't exist
+    // This prevents email enumeration attacks
+    if (!user) {
+      return {
+        success: true,
+        message:
+          'If an account with that email exists, a password reset link has been sent.',
+      }
+    }
+
+    // Check if user has a password (not OAuth-only user)
+    if (!user.password) {
+      return {
+        success: false,
+        message:
+          'This account uses OAuth sign-in. Please sign in with Google or GitHub.',
+      }
+    }
+
+    // Create reset token
+    const token = await createPasswordResetToken(validatedData.email)
+
+    // Send reset email
+    await sendPasswordResetEmail(validatedData.email, user.name, token)
+
+    return {
+      success: true,
+      message:
+        'If an account with that email exists, a password reset link has been sent.',
+    }
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error
+    }
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: error.message,
+      }
+    }
+
+    return {
+      success: false,
+      message: 'An unexpected error occurred',
+    }
+  }
+}
+
+// Reset password with token
+export async function resetPassword(prevState: unknown, formData: FormData) {
+  try {
+    // Extract and validate form data
+    const data = {
+      email: formData.get('email') as string,
+      token: formData.get('token') as string,
+      password: formData.get('password') as string,
+      confirmPassword: formData.get('confirmPassword') as string,
+    }
+
+    const email = data.email
+    const token = data.token
+
+    // Validate password
+    const validatedData = resetPasswordSchema.parse({
+      password: data.password,
+      confirmPassword: data.confirmPassword,
+    })
+
+    // Verify token
+    const isValid = await verifyPasswordResetToken(email, token)
+
+    if (!isValid) {
+      return {
+        success: false,
+        message:
+          'Invalid or expired reset link. Please request a new password reset.',
+      }
+    }
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { email },
+    })
+
+    if (!user) {
+      return {
+        success: false,
+        message: 'User not found',
+      }
+    }
+
+    // Hash new password
+    const hashedPassword = hashSync(validatedData.password, 10)
+
+    // Update user's password
+    await prisma.user.update({
+      where: { email },
+      data: {
+        password: hashedPassword,
+      },
+    })
+
+    return {
+      success: true,
+      message: 'Password reset successfully! You can now sign in with your new password.',
+    }
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error
+    }
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: error.message,
+      }
+    }
+
+    return {
+      success: false,
+      message: 'An unexpected error occurred',
     }
   }
 }
