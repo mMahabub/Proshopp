@@ -193,6 +193,7 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-108: Header auth state with user dropdown
 - ✅ TASK-201: Cart database models (Cart and CartItem)
 - ✅ TASK-202: Zustand cart store with localStorage persistence
+- ✅ TASK-203: Cart server actions with stock validation
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -775,6 +776,253 @@ export default function ProductCard({ product }) {
 ```
 
 **Pattern:** Client-side state for cart, server state via Server Components
+
+#### Cart Server Actions - ✅ IMPLEMENTED (TASK-203)
+
+**Cart Actions (`lib/actions/cart.actions.ts`):**
+
+```typescript
+'use server'
+
+import { auth } from '@/auth'
+import { prisma } from '@/db/prisma'
+import { revalidatePath } from 'next/cache'
+import { addToCartSchema, updateCartItemSchema, removeFromCartSchema, syncCartSchema } from '@/lib/validations/cart'
+
+// Get user's cart with all items
+export async function getCart() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'You must be signed in to view your cart' }
+  }
+
+  let cart = await prisma.cart.findUnique({
+    where: { userId: session.user.id },
+    include: { items: { include: { product: true } } },
+  })
+
+  if (!cart) {
+    cart = await prisma.cart.create({
+      data: { userId: session.user.id },
+      include: { items: { include: { product: true } } },
+    })
+  }
+
+  return { success: true, data: cart }
+}
+
+// Sync local cart to database when user signs in
+export async function syncCart(items: { productId: string; quantity: number }[]) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'You must be signed in to sync your cart' }
+  }
+
+  const validatedData = syncCartSchema.parse({ items })
+
+  let cart = await prisma.cart.findUnique({ where: { userId: session.user.id } })
+  if (!cart) {
+    cart = await prisma.cart.create({ data: { userId: session.user.id } })
+  }
+
+  for (const item of validatedData.items) {
+    const product = await prisma.product.findUnique({ where: { id: item.productId } })
+    if (!product || product.stock < item.quantity) continue
+
+    const existingItem = await prisma.cartItem.findUnique({
+      where: { cartId_productId: { cartId: cart.id, productId: item.productId } },
+    })
+
+    if (existingItem) {
+      await prisma.cartItem.update({
+        where: { id: existingItem.id },
+        data: { quantity: Math.min(existingItem.quantity + item.quantity, product.stock), price: product.price },
+      })
+    } else {
+      await prisma.cartItem.create({
+        data: { cartId: cart.id, productId: item.productId, quantity: item.quantity, price: product.price },
+      })
+    }
+  }
+
+  revalidatePath('/cart')
+  return { success: true, message: 'Cart synced successfully' }
+}
+
+// Add product to cart with stock validation
+export async function addToCart(productId: string, quantity: number) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'You must be signed in to add items to cart' }
+  }
+
+  const validatedData = addToCartSchema.parse({ productId, quantity })
+
+  const product = await prisma.product.findUnique({ where: { id: validatedData.productId } })
+  if (!product) {
+    return { success: false, message: 'Product not found' }
+  }
+  if (product.stock < validatedData.quantity) {
+    return { success: false, message: `Only ${product.stock} item(s) available in stock` }
+  }
+
+  let cart = await prisma.cart.findUnique({ where: { userId: session.user.id } })
+  if (!cart) {
+    cart = await prisma.cart.create({ data: { userId: session.user.id } })
+  }
+
+  const existingItem = await prisma.cartItem.findUnique({
+    where: { cartId_productId: { cartId: cart.id, productId: validatedData.productId } },
+  })
+
+  if (existingItem) {
+    const newQuantity = existingItem.quantity + validatedData.quantity
+    if (newQuantity > product.stock) {
+      return { success: false, message: `Cannot add more items. Only ${product.stock} available in stock` }
+    }
+    await prisma.cartItem.update({
+      where: { id: existingItem.id },
+      data: { quantity: newQuantity, price: product.price },
+    })
+  } else {
+    await prisma.cartItem.create({
+      data: { cartId: cart.id, productId: validatedData.productId, quantity: validatedData.quantity, price: product.price },
+    })
+  }
+
+  revalidatePath('/cart')
+  return { success: true, message: 'Item added to cart successfully' }
+}
+
+// Update cart item quantity
+export async function updateCartItem(itemId: string, quantity: number) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'You must be signed in to update cart items' }
+  }
+
+  const validatedData = updateCartItemSchema.parse({ itemId, quantity })
+
+  const cartItem = await prisma.cartItem.findUnique({
+    where: { id: validatedData.itemId },
+    include: { cart: true, product: true },
+  })
+
+  if (!cartItem) {
+    return { success: false, message: 'Cart item not found' }
+  }
+  if (cartItem.cart.userId !== session.user.id) {
+    return { success: false, message: 'Unauthorized' }
+  }
+  if (validatedData.quantity > cartItem.product.stock) {
+    return { success: false, message: `Only ${cartItem.product.stock} item(s) available in stock` }
+  }
+
+  await prisma.cartItem.update({
+    where: { id: validatedData.itemId },
+    data: { quantity: validatedData.quantity, price: cartItem.product.price },
+  })
+
+  revalidatePath('/cart')
+  return { success: true, message: 'Cart item updated successfully' }
+}
+
+// Remove item from cart
+export async function removeFromCart(itemId: string) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'You must be signed in to remove items from cart' }
+  }
+
+  const validatedData = removeFromCartSchema.parse({ itemId })
+
+  const cartItem = await prisma.cartItem.findUnique({
+    where: { id: validatedData.itemId },
+    include: { cart: true },
+  })
+
+  if (!cartItem) {
+    return { success: false, message: 'Cart item not found' }
+  }
+  if (cartItem.cart.userId !== session.user.id) {
+    return { success: false, message: 'Unauthorized' }
+  }
+
+  await prisma.cartItem.delete({ where: { id: validatedData.itemId } })
+
+  revalidatePath('/cart')
+  return { success: true, message: 'Item removed from cart successfully' }
+}
+
+// Clear all items from cart
+export async function clearCart() {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return { success: false, message: 'You must be signed in to clear your cart' }
+  }
+
+  const cart = await prisma.cart.findUnique({ where: { userId: session.user.id } })
+  if (!cart) {
+    return { success: true, message: 'Cart is already empty' }
+  }
+
+  await prisma.cartItem.deleteMany({ where: { cartId: cart.id } })
+
+  revalidatePath('/cart')
+  return { success: true, message: 'Cart cleared successfully' }
+}
+```
+
+**Cart Validation Schemas (`lib/validations/cart.ts`):**
+
+```typescript
+import { z } from 'zod'
+
+export const addToCartSchema = z.object({
+  productId: z.string().uuid('Invalid product ID'),
+  quantity: z.number().int().min(1).max(100),
+})
+
+export const updateCartItemSchema = z.object({
+  itemId: z.string().uuid('Invalid item ID'),
+  quantity: z.number().int().min(1).max(100),
+})
+
+export const removeFromCartSchema = z.object({
+  itemId: z.string().uuid('Invalid item ID'),
+})
+
+export const syncCartSchema = z.object({
+  items: z.array(
+    z.object({
+      productId: z.string().uuid('Invalid product ID'),
+      quantity: z.number().int().min(1).max(100),
+    })
+  ),
+})
+```
+
+**Features:**
+- ✅ Authentication required for all cart operations
+- ✅ Stock validation before add/update
+- ✅ Auto-create cart on first operation
+- ✅ Merge local cart with DB cart on sign-in
+- ✅ Ownership validation (users can only modify their own carts)
+- ✅ Automatic price updates from product
+- ✅ Cache revalidation after mutations
+- ✅ Comprehensive error handling
+- ✅ Zod schema validation for all inputs
+
+**Testing:**
+```typescript
+// 25 comprehensive tests covering:
+// - All 6 cart actions (getCart, syncCart, addToCart, updateCartItem, removeFromCart, clearCart)
+// - Authentication checks
+// - Stock validation
+// - Ownership validation
+// - Error cases
+// - All tests passing (146 total tests in project)
+```
 
 #### Payment Integration (Stripe)
 - **Installation**: `npm install stripe @stripe/stripe-js @stripe/react-stripe-js`
@@ -1519,6 +1767,10 @@ __tests__/components/shared/header/    # Header component tests ✅
 lib/store/cart-store.ts                # Zustand cart store with localStorage ✅
 types/cart.ts                          # Cart type definitions ✅
 __tests__/lib/store/                   # Cart store tests ✅
+lib/actions/cart.actions.ts            # Cart server actions with stock validation ✅
+lib/validations/cart.ts                # Cart validation schemas ✅
+__tests__/lib/actions/cart.actions.test.ts  # Cart actions tests ✅
+__mocks__/auth.ts                      # Auth mock for testing ✅
 ```
 
 **Pending Directories:**
