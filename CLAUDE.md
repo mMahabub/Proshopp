@@ -814,6 +814,339 @@ describe('verifyToken', () => {
 })
 ```
 
+**Password Reset Flow (TASK-107):**
+
+**Password Reset Utilities (`lib/utils/email.ts`):**
+```typescript
+// Create password reset token with 1-hour expiry
+export async function createPasswordResetToken(email: string): Promise<string> {
+  // Delete existing reset tokens
+  await prisma.verificationToken.deleteMany({
+    where: { identifier: `reset:${email}` },
+  })
+
+  const token = generateVerificationToken()
+  const expires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+  // Use reset: prefix to differentiate from verification tokens
+  await prisma.verificationToken.create({
+    data: {
+      identifier: `reset:${email}`,
+      token,
+      expires,
+    },
+  })
+
+  return token
+}
+
+// Verify password reset token (one-time use)
+export async function verifyPasswordResetToken(
+  email: string,
+  token: string
+): Promise<boolean> {
+  const resetToken = await prisma.verificationToken.findUnique({
+    where: {
+      identifier_token: {
+        identifier: `reset:${email}`,
+        token,
+      },
+    },
+  })
+
+  if (!resetToken || resetToken.expires < new Date()) {
+    // Delete expired token
+    if (resetToken) {
+      await prisma.verificationToken.delete({
+        where: {
+          identifier_token: {
+            identifier: `reset:${email}`,
+            token,
+          },
+        },
+      })
+    }
+    return false
+  }
+
+  // Delete token (one-time use)
+  await prisma.verificationToken.delete({
+    where: {
+      identifier_token: {
+        identifier: `reset:${email}`,
+        token,
+      },
+    },
+  })
+
+  return true
+}
+
+// Send password reset email
+export async function sendPasswordResetEmail(
+  email: string,
+  name: string,
+  token: string
+): Promise<void> {
+  const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(email)}`
+
+  await resend.emails.send({
+    from: `${APP_NAME} <onboarding@resend.dev>`,
+    to: email,
+    subject: `Reset your ${APP_NAME} password`,
+    html: `<!-- HTML template with 1-hour expiration notice -->`,
+  })
+}
+```
+
+**Password Reset Server Actions (`lib/actions/auth.actions.ts`):**
+```typescript
+// Request password reset (forgot password)
+export async function requestPasswordReset(
+  prevState: unknown,
+  formData: FormData
+) {
+  const validatedData = emailSchema.parse(data)
+
+  const user = await prisma.user.findUnique({
+    where: { email: validatedData.email },
+  })
+
+  // Email enumeration protection - always return success
+  if (!user) {
+    return {
+      success: true,
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    }
+  }
+
+  // Prevent password reset for OAuth-only users
+  if (!user.password) {
+    return {
+      success: false,
+      message: 'This account uses OAuth sign-in. Please sign in with Google or GitHub.',
+    }
+  }
+
+  const token = await createPasswordResetToken(validatedData.email)
+  await sendPasswordResetEmail(validatedData.email, user.name, token)
+
+  return {
+    success: true,
+    message: 'If an account with that email exists, a password reset link has been sent.',
+  }
+}
+
+// Reset password with token
+export async function resetPassword(prevState: unknown, formData: FormData) {
+  const email = formData.get('email') as string
+  const token = formData.get('token') as string
+  const validatedData = resetPasswordSchema.parse({
+    password: formData.get('password'),
+    confirmPassword: formData.get('confirmPassword'),
+  })
+
+  // Verify token
+  const isValid = await verifyPasswordResetToken(email, token)
+  if (!isValid) {
+    return {
+      success: false,
+      message: 'Invalid or expired reset link. Please request a new password reset.',
+    }
+  }
+
+  // Update password
+  const hashedPassword = hashSync(validatedData.password, 10)
+  await prisma.user.update({
+    where: { email },
+    data: { password: hashedPassword },
+  })
+
+  return {
+    success: true,
+    message: 'Password reset successfully! You can now sign in with your new password.',
+  }
+}
+```
+
+**Forgot Password Form (`components/auth/forgot-password-form.tsx`):**
+```typescript
+'use client'
+
+import { useActionState } from 'react'
+import { requestPasswordReset } from '@/lib/actions/auth.actions'
+
+export default function ForgotPasswordForm() {
+  const [state, formAction] = useActionState(requestPasswordReset, undefined)
+
+  return (
+    <div className="space-y-6">
+      {state?.success === true && (
+        <div className="rounded-md bg-green-50 p-3 text-sm text-green-600">
+          {state.message}
+        </div>
+      )}
+
+      <form action={formAction} className="space-y-4">
+        <input
+          type="email"
+          name="email"
+          placeholder="name@example.com"
+          required
+        />
+        <Button type="submit">Send Reset Link</Button>
+      </form>
+    </div>
+  )
+}
+```
+
+**Reset Password Form (`components/auth/reset-password-form.tsx`):**
+```typescript
+'use client'
+
+import { useActionState, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { resetPassword } from '@/lib/actions/auth.actions'
+
+export default function ResetPasswordForm({ email, token }) {
+  const router = useRouter()
+  const [state, formAction] = useActionState(resetPassword, undefined)
+  const [password, setPassword] = useState('')
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    message: '',
+    color: '',
+  })
+
+  // Password strength checker (5-point scale)
+  useEffect(() => {
+    if (!password) {
+      setPasswordStrength({ score: 0, message: '', color: '' })
+      return
+    }
+
+    let score = 0
+    if (password.length >= 8) score++
+    if (/[A-Z]/.test(password)) score++
+    if (/[a-z]/.test(password)) score++
+    if (/[0-9]/.test(password)) score++
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++
+
+    let message = '', color = ''
+    if (score <= 2) {
+      message = 'Weak'
+      color = 'bg-red-500'
+    } else if (score === 3) {
+      message = 'Fair'
+      color = 'bg-yellow-500'
+    } else if (score === 4) {
+      message = 'Good'
+      color = 'bg-blue-500'
+    } else {
+      message = 'Strong'
+      color = 'bg-green-500'
+    }
+
+    setPasswordStrength({ score, message, color })
+  }, [password])
+
+  // Auto-redirect on success
+  useEffect(() => {
+    if (state?.success === true) {
+      setTimeout(() => router.push('/sign-in'), 3000)
+    }
+  }, [state, router])
+
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="email" value={email} />
+      <input type="hidden" name="token" value={token} />
+
+      {/* Password with strength indicator */}
+      <input
+        type="password"
+        name="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+
+      {password && (
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-full bg-gray-200 rounded-full">
+            <div
+              className={`h-full ${passwordStrength.color} transition-all`}
+              style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+            />
+          </div>
+          <span>{passwordStrength.message}</span>
+        </div>
+      )}
+
+      <input type="password" name="confirmPassword" required />
+      <Button type="submit">Reset Password</Button>
+    </form>
+  )
+}
+```
+
+**Password Reset Pages:**
+- `/forgot-password` - Email input form with success/error states
+- `/reset-password` - Token validation, password input with strength indicator, auto-redirect
+
+**Security Features:**
+- ✅ 1-hour token expiration (shorter than email verification for security)
+- ✅ One-time use tokens (deleted after verification)
+- ✅ Email enumeration protection (consistent success messages)
+- ✅ OAuth-only user detection (prevents password reset)
+- ✅ Token prefix separation (`reset:` vs regular verification tokens)
+- ✅ Password strength requirements enforced
+- ✅ Auto-redirect to sign-in on success
+
+**Testing Password Reset:**
+```typescript
+// Test password reset token
+describe('createPasswordResetToken', () => {
+  it('should create token with 1-hour expiry', async () => {
+    const email = 'test@example.com'
+    const now = new Date()
+
+    const token = await createPasswordResetToken(email)
+
+    // Verify 1-hour expiration
+    const expiryTime = createCall.data.expires.getTime()
+    const expectedExpiry = now.getTime() + 60 * 60 * 1000
+    expect(Math.abs(expiryTime - expectedExpiry)).toBeLessThan(1000)
+  })
+
+  it('should use reset: prefix', async () => {
+    const email = 'test@example.com'
+    await createPasswordResetToken(email)
+
+    expect(createCall.data.identifier).toBe(`reset:${email}`)
+  })
+})
+
+// Test token verification
+describe('verifyPasswordResetToken', () => {
+  it('should delete expired tokens', async () => {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
+    const result = await verifyPasswordResetToken(email, token)
+
+    expect(result).toBe(false)
+    expect(prisma.verificationToken.delete).toHaveBeenCalled()
+  })
+
+  it('should use one-time tokens', async () => {
+    const result = await verifyPasswordResetToken(email, token)
+
+    expect(result).toBe(true)
+    expect(prisma.verificationToken.delete).toHaveBeenCalledTimes(1)
+  })
+})
+```
+
 #### Forms (React Hook Form + Zod)
 - **Installation**: `npm install react-hook-form @hookform/resolvers`
 - **Pattern**:
@@ -832,6 +1165,8 @@ describe('verifyToken', () => {
 app/(auth)/sign-in/          # Sign-in page ✅
 app/(auth)/sign-up/          # Sign-up page ✅
 app/(auth)/verify-email/     # Email verification page ✅
+app/(auth)/forgot-password/  # Forgot password page ✅
+app/(auth)/reset-password/   # Password reset page ✅
 app/api/auth/[...nextauth]/  # Auth.js API routes (OAuth callbacks) ✅
 lib/validations/auth.ts      # Auth validation schemas ✅
 lib/actions/auth.actions.ts  # Auth server actions ✅
@@ -844,7 +1179,6 @@ __tests__/components/auth/   # Auth component tests ✅
 
 **Pending Directories:**
 ```
-app/(auth)/reset-password/   # Password reset page (pending)
 app/(dashboard)/             # User dashboard (profile, orders, addresses)
 app/(admin)/                # Admin panel (dashboard, products, orders, users)
 app/api/uploadthing/        # File upload route
