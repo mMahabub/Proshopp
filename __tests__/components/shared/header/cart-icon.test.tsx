@@ -1,7 +1,7 @@
 // Mock dependencies BEFORE any imports
 jest.mock('@/lib/store/cart-store')
 
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import CartIcon from '@/components/shared/header/cart-icon'
 import { useCartStore } from '@/lib/store/cart-store'
 
@@ -10,6 +10,9 @@ const mockUseCartStore = useCartStore as jest.MockedFunction<typeof useCartStore
 describe('CartIcon', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+
+    // Mock cart store subscribe function
+    ;(useCartStore as any).subscribe = jest.fn(() => jest.fn())
 
     // Mock cart store with default empty state
     mockUseCartStore.mockReturnValue({
@@ -61,7 +64,7 @@ describe('CartIcon', () => {
   })
 
   describe('Badge Display', () => {
-    it('should not show badge when cart is empty', () => {
+    it('should not show badge when cart is empty', async () => {
       mockUseCartStore.mockReturnValue({
         items: [],
         getItemCount: jest.fn(() => 0),
@@ -74,11 +77,13 @@ describe('CartIcon', () => {
 
       render(<CartIcon />)
 
-      // Badge should not be present when count is 0
-      expect(screen.queryByText('0')).not.toBeInTheDocument()
+      // Wait for component to mount and useEffect to run
+      await waitFor(() => {
+        expect(screen.queryByText('0')).not.toBeInTheDocument()
+      })
     })
 
-    it('should show badge with item count when cart has items', () => {
+    it('should show badge with item count when cart has items', async () => {
       mockUseCartStore.mockReturnValue({
         items: [{
           id: '1',
@@ -99,11 +104,13 @@ describe('CartIcon', () => {
 
       render(<CartIcon />)
 
-      // Badge should display item count
-      expect(screen.getByText('2')).toBeInTheDocument()
+      // Wait for component to mount and badge to appear
+      await waitFor(() => {
+        expect(screen.getByText('2')).toBeInTheDocument()
+      })
     })
 
-    it('should update badge when item count changes', () => {
+    it('should update badge when item count changes', async () => {
       const mockGetItemCount = jest.fn(() => 5)
       mockUseCartStore.mockReturnValue({
         items: Array(3).fill({
@@ -125,10 +132,12 @@ describe('CartIcon', () => {
 
       render(<CartIcon />)
 
-      expect(screen.getByText('5')).toBeInTheDocument()
+      await waitFor(() => {
+        expect(screen.getByText('5')).toBeInTheDocument()
+      })
     })
 
-    it('should handle large item counts', () => {
+    it('should handle large item counts', async () => {
       mockUseCartStore.mockReturnValue({
         items: Array(50).fill({
           id: '1',
@@ -149,8 +158,10 @@ describe('CartIcon', () => {
 
       render(<CartIcon />)
 
-      // Should display large numbers correctly
-      expect(screen.getByText('99')).toBeInTheDocument()
+      // Wait for badge to render with large count
+      await waitFor(() => {
+        expect(screen.getByText('99')).toBeInTheDocument()
+      })
     })
   })
 

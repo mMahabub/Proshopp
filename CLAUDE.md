@@ -1511,6 +1511,7 @@ npm test
 ```typescript
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/lib/store/cart-store'
@@ -1523,7 +1524,25 @@ interface CartIconProps {
 
 export default function CartIcon({ className }: CartIconProps = {}) {
   const { getItemCount } = useCartStore()
-  const itemCount = getItemCount()
+  const [itemCount, setItemCount] = useState(0)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Prevent hydration mismatch by only showing cart count after mount
+  useEffect(() => {
+    setIsMounted(true)
+    setItemCount(getItemCount())
+  }, [getItemCount])
+
+  // Subscribe to cart changes after mount
+  useEffect(() => {
+    if (!isMounted) return
+
+    const unsubscribe = useCartStore.subscribe((state) => {
+      setItemCount(state.getItemCount())
+    })
+
+    return () => unsubscribe()
+  }, [isMounted])
 
   return (
     <Button
@@ -1537,7 +1556,7 @@ export default function CartIcon({ className }: CartIconProps = {}) {
       <Link href="/cart">
         <ShoppingCart className="w-5 h-5" />
         <span>Cart</span>
-        {itemCount > 0 && (
+        {isMounted && itemCount > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
             {itemCount}
           </span>
@@ -1548,11 +1567,28 @@ export default function CartIcon({ className }: CartIconProps = {}) {
 }
 ```
 
+**Hydration-Safe Pattern:**
+This component uses a hydration-safe pattern to prevent React hydration errors:
+
+1. **The Problem:** Zustand store uses `localStorage` which isn't available during SSR
+   - Server renders with itemCount = 0 (no localStorage)
+   - Client hydrates and loads from localStorage (itemCount might be > 0)
+   - HTML mismatch → Hydration error ❌
+
+2. **The Solution:** Only render badge after client-side mount
+   - `useState(0)` ensures initial render matches server (itemCount = 0)
+   - `useEffect` sets `isMounted` to true after mount
+   - Badge only renders when `isMounted && itemCount > 0`
+   - `useCartStore.subscribe()` updates count on cart changes
+
+3. **Result:** Server HTML matches client HTML → No hydration errors ✅
+
 **Features:**
 - ✅ Shopping cart icon (ShoppingCart from lucide-react)
 - ✅ Item count badge (hidden when cart is empty)
 - ✅ Badge positioned absolutely (-top-1, -right-1)
-- ✅ Real-time updates via Zustand store
+- ✅ Real-time updates via Zustand store subscription
+- ✅ Hydration-safe implementation (prevents SSR/client mismatch)
 - ✅ Links to /cart page
 - ✅ Customizable styling via className prop
 - ✅ Used in both desktop and mobile header menus
@@ -1581,23 +1617,25 @@ Mobile navigation:
 ```bash
 npm test
 
-# CartIcon component (11 tests):
+# CartIcon component (9 tests - updated for hydration-safe pattern):
 # - Rendering (icon, text, link to /cart)
-# - Badge display logic (hidden when count is 0, shown when > 0)
-# - Item count updates (2, 5, 99 items)
+# - Badge display logic with async/await (hidden when count is 0, shown when > 0)
+# - Item count updates with waitFor (2, 5, 99 items)
 # - Large item counts handling
 # - Link behavior
 # - Accessibility (accessible link text)
 
+# Tests use waitFor() to handle async useEffect mounting
 # All tests passing (201 total tests in project)
 ```
 
 **Flow:**
-1. Component uses `useCartStore()` to get current item count
-2. Badge is conditionally rendered only when `itemCount > 0`
-3. Badge updates in real-time as items are added/removed from cart
-4. Clicking anywhere on the button navigates to `/cart` page
-5. Component can be customized with className prop for different contexts
+1. Component renders with `isMounted = false` and `itemCount = 0` (matches server)
+2. After mount, `useEffect` sets `isMounted = true` and loads count from localStorage
+3. Badge conditionally renders only when `isMounted && itemCount > 0`
+4. Zustand store subscription updates badge in real-time on cart changes
+5. Clicking anywhere on the button navigates to `/cart` page
+6. Component can be customized with className prop for different contexts
 
 #### Payment Integration (Stripe)
 - **Installation**: `npm install stripe @stripe/stripe-js @stripe/react-stripe-js`
