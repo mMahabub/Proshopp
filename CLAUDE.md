@@ -1501,6 +1501,101 @@ npm test
 7. User clicks "Proceed to Checkout" → Navigate to checkout
 8. User clicks "Continue Shopping" → Navigate to home
 
+#### Cart Icon with Badge - ✅ IMPLEMENTED (TASK-206)
+
+**Cart Icon Component (`components/shared/header/cart-icon.tsx`):**
+
+```typescript
+'use client'
+
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { useCartStore } from '@/lib/store/cart-store'
+import { ShoppingCart } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+interface CartIconProps {
+  className?: string
+}
+
+export default function CartIcon({ className }: CartIconProps = {}) {
+  const { getItemCount } = useCartStore()
+  const itemCount = getItemCount()
+
+  return (
+    <Button
+      asChild
+      variant="ghost"
+      className={cn(
+        "flex items-center gap-2 hover:bg-gray-200 transition-all duration-200 rounded-lg px-3 py-2 relative",
+        className
+      )}
+    >
+      <Link href="/cart">
+        <ShoppingCart className="w-5 h-5" />
+        <span>Cart</span>
+        {itemCount > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+            {itemCount}
+          </span>
+        )}
+      </Link>
+    </Button>
+  )
+}
+```
+
+**Features:**
+- ✅ Shopping cart icon (ShoppingCart from lucide-react)
+- ✅ Item count badge (hidden when cart is empty)
+- ✅ Badge positioned absolutely (-top-1, -right-1)
+- ✅ Real-time updates via Zustand store
+- ✅ Links to /cart page
+- ✅ Customizable styling via className prop
+- ✅ Used in both desktop and mobile header menus
+
+**Integration in Menu Component:**
+
+Desktop navigation:
+```typescript
+<nav className="hidden md:flex w-full max-w-sm gap-3 items-center">
+  <MoodToggle />
+  <CartIcon />
+  {/* User auth buttons */}
+</nav>
+```
+
+Mobile navigation:
+```typescript
+<SheetContent>
+  <MoodToggle />
+  <CartIcon className="w-full hover:bg-gray-100" />
+  {/* User menu */}
+</SheetContent>
+```
+
+**Testing Summary:**
+```bash
+npm test
+
+# CartIcon component (11 tests):
+# - Rendering (icon, text, link to /cart)
+# - Badge display logic (hidden when count is 0, shown when > 0)
+# - Item count updates (2, 5, 99 items)
+# - Large item counts handling
+# - Link behavior
+# - Accessibility (accessible link text)
+
+# All tests passing (201 total tests in project)
+```
+
+**Flow:**
+1. Component uses `useCartStore()` to get current item count
+2. Badge is conditionally rendered only when `itemCount > 0`
+3. Badge updates in real-time as items are added/removed from cart
+4. Clicking anywhere on the button navigates to `/cart` page
+5. Component can be customized with className prop for different contexts
+
 #### Payment Integration (Stripe)
 - **Installation**: `npm install stripe @stripe/stripe-js @stripe/react-stripe-js`
 - **Server**: `lib/utils/stripe.ts` - Stripe instance

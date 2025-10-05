@@ -1,10 +1,10 @@
 import { Button } from '@/components/ui/button'
 import MoodToggle from './mode-toggle'
 import UserButton from './user-button'
+import CartIcon from './cart-icon'
 import { auth } from '@/auth'
 import {
   EllipsisVertical,
-  ShoppingCart,
   UserIcon,
   User,
   Package,
@@ -30,15 +30,7 @@ const Menu = async () => {
       {/* Desktop Navigation */}
       <nav className="hidden md:flex w-full max-w-sm gap-3 items-center">
         <MoodToggle />
-        <Button
-          asChild
-          variant="ghost"
-          className="flex items-center gap-2 hover:bg-gray-200 transition-all duration-200 rounded-lg px-3 py-2"
-        >
-          <Link href="/cart">
-            <ShoppingCart className="w-5 h-5" /> <span>Cart</span>
-          </Link>
-        </Button>
+        <CartIcon />
         {session?.user ? (
           <UserButton user={session.user} />
         ) : (
@@ -62,15 +54,7 @@ const Menu = async () => {
           <SheetContent className="flex flex-col items-start gap-4 p-4 bg-white rounded-lg">
             <SheetTitle className="text-lg font-semibold">Menu</SheetTitle>
             <MoodToggle />
-            <Button
-              asChild
-              variant="ghost"
-              className="flex items-center gap-2 hover:bg-gray-100 transition-all duration-200 rounded-lg px-3 py-2 w-full"
-            >
-              <Link href="/cart">
-                <ShoppingCart className="w-5 h-5" /> <span>Cart</span>
-              </Link>
-            </Button>
+            <CartIcon className="w-full hover:bg-gray-100" />
 
             {session?.user ? (
               <>
