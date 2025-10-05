@@ -189,6 +189,8 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-104: Sign-up page and form with password strength indicator
 - ✅ TASK-105: Sign-in page and form with OAuth integration
 - ✅ TASK-106: Email verification system with Resend
+- ✅ TASK-107: Password reset flow with email tokens
+- ✅ TASK-108: Header auth state with user dropdown
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -1147,6 +1149,190 @@ describe('verifyPasswordResetToken', () => {
 })
 ```
 
+**Header Auth State (TASK-108):**
+
+**User Dropdown Component (`components/shared/header/user-button.tsx`):**
+```typescript
+'use client'
+
+import { signOutUser } from '@/lib/actions/auth.actions'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { LogOut, ShieldCheck, User, Package } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
+
+interface UserButtonProps {
+  user: {
+    name: string
+    email: string
+    role: string
+    image?: string
+  }
+}
+
+export default function UserButton({ user }: UserButtonProps) {
+  const handleSignOut = async () => {
+    await signOutUser()
+  }
+
+  // Get user initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost">
+          {/* User Avatar with initials or image */}
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white">
+            {user.image ? (
+              <Image src={user.image} alt={user.name} width={32} height={32} className="rounded-full" />
+            ) : (
+              getInitials(user.name)
+            )}
+          </div>
+          <span className="hidden sm:inline-block">{user.name}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>
+          <p>{user.name}</p>
+          <p className="text-xs text-muted-foreground">{user.email}</p>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/profile">
+            <User className="mr-2 h-4 w-4" />
+            Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/orders">
+            <Package className="mr-2 h-4 w-4" />
+            Orders
+          </Link>
+        </DropdownMenuItem>
+        {user.role === 'admin' && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/admin">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Admin Panel
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign Out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+```
+
+**Header Menu with Auth State (`components/shared/header/menu.tsx`):**
+```typescript
+import { auth } from '@/auth'
+import UserButton from './user-button'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+
+const Menu = async () => {
+  const session = await auth()
+
+  return (
+    <nav className="hidden md:flex w-full max-w-sm gap-3 items-center">
+      <MoodToggle />
+      <Button asChild variant="ghost">
+        <Link href="/cart">
+          <ShoppingCart className="w-5 h-5" /> <span>Cart</span>
+        </Link>
+      </Button>
+      {session?.user ? (
+        <UserButton user={session.user} />
+      ) : (
+        <Button asChild>
+          <Link href="/sign-in">
+            <UserIcon className="w-5 h-5" /> <span>Sign In</span>
+          </Link>
+        </Button>
+      )}
+    </nav>
+  )
+}
+
+export default Menu
+```
+
+**Features:**
+- ✅ Server component fetches session with `await auth()`
+- ✅ Shows "Sign In" button when logged out
+- ✅ Shows user avatar with initials or profile image when logged in
+- ✅ Dropdown menu with Profile, Orders, Sign Out links
+- ✅ Admin users see "Admin Panel" link
+- ✅ Mobile menu includes auth state with user info
+- ✅ Uses Next.js Image component for optimized avatars
+- ✅ Initials generated from user name (first 2 letters)
+- ✅ Sign-out action integrated with server action
+
+**Testing Header Auth State:**
+```typescript
+describe('UserButton', () => {
+  it('should display user initials when no image', () => {
+    const user = { name: 'John Doe', email: 'john@example.com', role: 'user' }
+    render(<UserButton user={user} />)
+
+    expect(screen.getByText('JD')).toBeInTheDocument()
+  })
+
+  it('should show Admin Panel link for admin users', async () => {
+    const adminUser = { name: 'Admin', email: 'admin@example.com', role: 'admin' }
+    const user = userEvent.setup()
+    render(<UserButton user={adminUser} />)
+
+    await user.click(screen.getByRole('button'))
+    expect(screen.getByText('Admin Panel')).toBeInTheDocument()
+  })
+
+  it('should not show Admin Panel for regular users', async () => {
+    const regularUser = { name: 'User', email: 'user@example.com', role: 'user' }
+    const user = userEvent.setup()
+    render(<UserButton user={regularUser} />)
+
+    await user.click(screen.getByRole('button'))
+    expect(screen.queryByText('Admin Panel')).not.toBeInTheDocument()
+  })
+
+  it('should call signOutUser when Sign Out clicked', async () => {
+    const user = userEvent.setup()
+    render(<UserButton user={mockUser} />)
+
+    await user.click(screen.getByRole('button'))
+    await user.click(screen.getByText('Sign Out'))
+
+    expect(signOutUser).toHaveBeenCalledTimes(1)
+  })
+})
+```
+
 #### Forms (React Hook Form + Zod)
 - **Installation**: `npm install react-hook-form @hookform/resolvers`
 - **Pattern**:
@@ -1162,19 +1348,21 @@ describe('verifyPasswordResetToken', () => {
 
 **Completed Directories:**
 ```
-app/(auth)/sign-in/          # Sign-in page ✅
-app/(auth)/sign-up/          # Sign-up page ✅
-app/(auth)/verify-email/     # Email verification page ✅
-app/(auth)/forgot-password/  # Forgot password page ✅
-app/(auth)/reset-password/   # Password reset page ✅
-app/api/auth/[...nextauth]/  # Auth.js API routes (OAuth callbacks) ✅
-lib/validations/auth.ts      # Auth validation schemas ✅
-lib/actions/auth.actions.ts  # Auth server actions ✅
-lib/utils/email.ts           # Email utilities (Resend) ✅
-components/auth/             # Auth form components ✅
-__tests__/lib/validations/   # Validation schema tests ✅
-__tests__/lib/utils/         # Email utility tests ✅
-__tests__/components/auth/   # Auth component tests ✅
+app/(auth)/sign-in/                    # Sign-in page ✅
+app/(auth)/sign-up/                    # Sign-up page ✅
+app/(auth)/verify-email/               # Email verification page ✅
+app/(auth)/forgot-password/            # Forgot password page ✅
+app/(auth)/reset-password/             # Password reset page ✅
+app/api/auth/[...nextauth]/            # Auth.js API routes (OAuth callbacks) ✅
+lib/validations/auth.ts                # Auth validation schemas ✅
+lib/actions/auth.actions.ts            # Auth server actions ✅
+lib/utils/email.ts                     # Email utilities (Resend) ✅
+components/auth/                       # Auth form components ✅
+components/shared/header/user-button.tsx  # User dropdown with auth state ✅
+__tests__/lib/validations/             # Validation schema tests ✅
+__tests__/lib/utils/                   # Email utility tests ✅
+__tests__/components/auth/             # Auth component tests ✅
+__tests__/components/shared/header/    # Header component tests ✅
 ```
 
 **Pending Directories:**
