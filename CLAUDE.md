@@ -195,6 +195,7 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-202: Zustand cart store with localStorage persistence
 - ✅ TASK-203: Cart server actions with stock validation
 - ✅ TASK-204: Add to Cart functionality with toast notifications
+- ✅ TASK-205: Cart page with item management
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -1254,6 +1255,252 @@ export function Providers({ children }: { children: React.ReactNode }) {
 5. If authenticated, sync to database in background
 6. If database sync fails, show error toast
 
+#### Cart Page - ✅ IMPLEMENTED (TASK-205)
+
+**Cart Item Component (`components/shared/cart/cart-item.tsx`):**
+
+```typescript
+'use client'
+
+import { useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { useCartStore } from '@/lib/store/cart-store'
+import { removeFromCart, updateCartItem } from '@/lib/actions/cart.actions'
+import { useSession } from 'next-auth/react'
+import { toast } from 'sonner'
+import { Trash2 } from 'lucide-react'
+import type { CartItem as CartItemType } from '@/types/cart'
+
+interface CartItemProps {
+  item: CartItemType
+}
+
+export default function CartItem({ item }: CartItemProps) {
+  const [isUpdating, setIsUpdating] = useState(false)
+  const { removeItem, updateQuantity } = useCartStore()
+  const { data: session } = useSession()
+
+  const handleQuantityChange = async (newQuantity: number) => {
+    try {
+      setIsUpdating(true)
+      updateQuantity(item.id, newQuantity) // Optimistic update
+
+      if (session?.user) {
+        const result = await updateCartItem(item.id, newQuantity)
+        if (!result.success) {
+          toast.error(result.message)
+          updateQuantity(item.id, item.quantity) // Revert on error
+        }
+      }
+    } catch {
+      toast.error('Failed to update quantity')
+      updateQuantity(item.id, item.quantity)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleRemove = async () => {
+    removeItem(item.id) // Optimistic update
+    toast.success('Item removed from cart')
+
+    if (session?.user) {
+      const result = await removeFromCart(item.id)
+      if (!result.success) {
+        toast.error(result.message)
+      }
+    }
+  }
+
+  const subtotal = item.price * item.quantity
+
+  return (
+    <div className="flex gap-4 py-4 border-b">
+      {/* Product image, name, price */}
+      <Link href={`/product/${item.slug}`}>
+        <Image src={item.image} alt={item.name} width={96} height={96} />
+      </Link>
+
+      <div className="flex-1">
+        <h3>{item.name}</h3>
+        <p>${item.price.toFixed(2)}</p>
+
+        {/* Quantity selector */}
+        <select
+          value={item.quantity}
+          onChange={(e) => handleQuantityChange(Number(e.target.value))}
+          disabled={isUpdating}
+        >
+          {Array.from({ length: Math.min(item.stock, 10) }, (_, i) => i + 1).map((num) => (
+            <option key={num} value={num}>{num}</option>
+          ))}
+        </select>
+
+        {/* Subtotal and remove button */}
+        <p>${subtotal.toFixed(2)}</p>
+        <Button onClick={handleRemove}>Remove</Button>
+      </div>
+    </div>
+  )
+}
+```
+
+**Cart Summary Component (`components/shared/cart/cart-summary.tsx`):**
+
+```typescript
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { useCartStore } from '@/lib/store/cart-store'
+
+const TAX_RATE = 0.08 // 8% tax
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount)
+}
+
+export default function CartSummary() {
+  const router = useRouter()
+  const { getTotal } = useCartStore()
+
+  const subtotal = getTotal()
+  const tax = subtotal * TAX_RATE
+  const total = subtotal + tax
+
+  return (
+    <div className="bg-gray-50 rounded-lg p-6">
+      <h2>Order Summary</h2>
+
+      <div className="space-y-2">
+        <div className="flex justify-between">
+          <span>Subtotal</span>
+          <span>{formatCurrency(subtotal)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Tax (8%)</span>
+          <span>{formatCurrency(tax)}</span>
+        </div>
+        <div className="flex justify-between font-semibold">
+          <span>Total</span>
+          <span>{formatCurrency(total)}</span>
+        </div>
+      </div>
+
+      <Button onClick={() => router.push('/checkout')}>
+        Proceed to Checkout
+      </Button>
+      <Button onClick={() => router.push('/')} variant="outline">
+        Continue Shopping
+      </Button>
+    </div>
+  )
+}
+```
+
+**Cart Page (`app/(root)/cart/page.tsx`):**
+
+```typescript
+'use client'
+
+import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { useCartStore } from '@/lib/store/cart-store'
+import CartItem from '@/components/shared/cart/cart-item'
+import CartSummary from '@/components/shared/cart/cart-summary'
+import { ShoppingCart } from 'lucide-react'
+
+export default function CartPage() {
+  const router = useRouter()
+  const { items, getItemCount } = useCartStore()
+  const itemCount = getItemCount()
+
+  if (items.length === 0) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-md mx-auto text-center">
+          <ShoppingCart className="w-24 h-24 mx-auto text-gray-300 mb-6" />
+          <h1>Your cart is empty</h1>
+          <Button onClick={() => router.push('/')}>Start Shopping</Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1>Shopping Cart ({itemCount} items)</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Cart Items */}
+        <div className="lg:col-span-2">
+          {items.map((item) => (
+            <CartItem key={item.id} item={item} />
+          ))}
+        </div>
+
+        {/* Cart Summary */}
+        <div className="lg:col-span-1">
+          <CartSummary />
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+**Features:**
+- ✅ Display all cart items with product info
+- ✅ Quantity selector (1-10 or max stock)
+- ✅ Remove item button with optimistic update
+- ✅ Calculate and display subtotal, tax (8%), and total
+- ✅ Empty cart state with "Start Shopping" button
+- ✅ Responsive layout (grid on desktop, stack on mobile)
+- ✅ Database sync for authenticated users
+- ✅ Optimistic UI updates with error rollback
+- ✅ Currency formatting with commas and decimals
+
+**Testing Summary:**
+```bash
+npm test
+
+# CartItem component (17 tests):
+# - Rendering (product image, name, price, quantity, subtotal)
+# - Quantity updates (local store + database sync)
+# - Remove item (local store + database sync)
+# - Error handling
+# - Stock validation
+
+# CartSummary component (10 tests):
+# - Display subtotal, tax, total
+# - Tax calculation (8%)
+# - Currency formatting
+# - Navigation (Continue Shopping, Proceed to Checkout)
+
+# Cart page (10 tests):
+# - Empty cart state
+# - Display cart items
+# - Item count in heading
+# - Integration with CartItem and CartSummary
+
+# All tests passing (192 total tests in project)
+```
+
+**Flow:**
+1. User navigates to `/cart`
+2. If cart empty: Show empty state with CTA
+3. If cart has items: Display items list + summary
+4. User can update quantity or remove items
+5. Changes sync to Zustand store (optimistic update)
+6. If authenticated, sync changes to database
+7. User clicks "Proceed to Checkout" → Navigate to checkout
+8. User clicks "Continue Shopping" → Navigate to home
+
 #### Payment Integration (Stripe)
 - **Installation**: `npm install stripe @stripe/stripe-js @stripe/react-stripe-js`
 - **Server**: `lib/utils/stripe.ts` - Stripe instance
@@ -2006,6 +2253,12 @@ components/providers.tsx               # Client providers wrapper (SessionProvid
 __tests__/components/shared/product/add-to-cart-button.test.tsx  # Add to cart button tests ✅
 __mocks__/next-auth/react.ts           # next-auth mock for testing ✅
 __mocks__/sonner.ts                    # Sonner toast mock for testing ✅
+app/(root)/cart/page.tsx               # Cart page with item management ✅
+components/shared/cart/cart-item.tsx   # Cart item component with quantity/remove ✅
+components/shared/cart/cart-summary.tsx  # Cart summary with totals and CTAs ✅
+__tests__/app/(root)/cart/page.test.tsx  # Cart page tests ✅
+__tests__/components/shared/cart/cart-item.test.tsx  # Cart item tests ✅
+__tests__/components/shared/cart/cart-summary.test.tsx  # Cart summary tests ✅
 ```
 
 **Pending Directories:**
