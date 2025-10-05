@@ -176,11 +176,19 @@ Required environment variables:
 
 ## Project Status & Documentation
 
-### Current Completion: 18%
+### Current Completion: 24%
 The project is in early development stage. Core documentation exists to guide development:
 - **spec.md** - Feature specifications and requirements
 - **plan.md** - Architecture decisions and implementation strategy
 - **task.md** - Detailed task breakdown (54 tasks across 9 phases)
+
+**Completed Tasks:**
+- ✅ TASK-001 to TASK-005: Bug fixes and core improvements
+- ✅ TASK-102: Auth.js configuration with Prisma adapter
+- ✅ TASK-103: Authentication middleware
+- ✅ TASK-104: Sign-up page and form with password strength indicator
+- ✅ TASK-105: Sign-in page and form with OAuth integration
+- ✅ TASK-106: Email verification system with Resend
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -198,16 +206,412 @@ The project is in early development stage. Core documentation exists to guide de
 
 ### Upcoming Architecture Additions
 
-#### Authentication (Auth.js v5)
-- **Installation**: `npm install next-auth@beta @auth/prisma-adapter`
-- **Config File**: `auth.ts` (root)
-- **Providers**: Credentials, Google, GitHub
-- **Session Strategy**: JWT with 30-day expiry
-- **Middleware**: `middleware.ts` for route protection
+#### Authentication (Auth.js v5) - ✅ IMPLEMENTED
+- **Installation**: `npm install next-auth@beta @auth/prisma-adapter bcrypt-ts-edge` ✅
+- **Config File**: `auth.ts` (root) ✅
+- **Providers**: Credentials, Google, GitHub ✅
+- **Session Strategy**: JWT with 30-day expiry ✅
+- **Middleware**: `middleware.ts` for route protection ✅
 - **Routes**:
-  - Public: `/sign-in`, `/sign-up`, `/verify-email`, `/reset-password`
-  - Protected: `/dashboard/*`, `/checkout/*`
-  - Admin: `/admin/*`
+  - Public: `/sign-in` ✅, `/sign-up` ✅, `/verify-email` ✅, `/reset-password` (pending)
+  - Protected: `/dashboard/*` ✅, `/checkout/*` ✅
+  - Admin: `/admin/*` ✅
+
+**Implementation Details (TASK-102, TASK-103, TASK-104, TASK-105, TASK-106):**
+
+**Auth Configuration (`auth.ts`):**
+```typescript
+import NextAuth, { type DefaultSession } from 'next-auth'
+import { PrismaAdapter } from '@auth/prisma-adapter'
+import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
+import GitHubProvider from 'next-auth/providers/github'
+import { prisma } from '@/db/prisma'
+import { compareSync } from 'bcrypt-ts-edge'
+import { z } from 'zod'
+
+// Extended session types
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string
+      role: string
+      email: string
+      name: string
+      image?: string
+    } & DefaultSession['user']
+  }
+}
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  providers: [
+    CredentialsProvider({
+      async authorize(credentials) {
+        // Validate credentials, check email verification, verify password
+        if (!user.emailVerified) {
+          throw new Error('Please verify your email address before signing in.')
+        }
+        const isPasswordValid = compareSync(password, user.password)
+        // Return user object
+      },
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      // Add user.id and user.role to token
+    },
+    async session({ session, token }) {
+      // Add token.id and token.role to session
+    },
+    async signIn({ user, account }) {
+      // OAuth users auto-verify email
+      if (account?.provider === 'google' || account?.provider === 'github') {
+        if (existingUser && !existingUser.emailVerified) {
+          await prisma.user.update({
+            where: { email: user.email },
+            data: { emailVerified: new Date() },
+          })
+        }
+      }
+      return true
+    },
+  },
+})
+```
+
+**Auth API Routes (`app/api/auth/[...nextauth]/route.ts`):**
+```typescript
+import { handlers } from '@/auth'
+
+export const { GET, POST } = handlers
+```
+
+**Authentication Middleware (`middleware.ts`):**
+```typescript
+import { auth } from '@/auth'
+import { NextResponse } from 'next/server'
+
+export default auth((req) => {
+  const { nextUrl, auth } = req
+  const isLoggedIn = !!auth?.user
+  const userRole = auth?.user?.role
+
+  const isDashboardRoute = nextUrl.pathname.startsWith('/dashboard')
+  const isAdminRoute = nextUrl.pathname.startsWith('/admin')
+  const isCheckoutRoute = nextUrl.pathname.startsWith('/checkout')
+
+  // Dashboard/Checkout: Require authentication
+  if ((isDashboardRoute || isCheckoutRoute) && !isLoggedIn) {
+    const signInUrl = new URL('/sign-in', nextUrl)
+    signInUrl.searchParams.set('callbackUrl', nextUrl.pathname)
+    return NextResponse.redirect(signInUrl)
+  }
+
+  // Admin: Require authentication AND admin role
+  if (isAdminRoute) {
+    if (!isLoggedIn) {
+      const signInUrl = new URL('/sign-in', nextUrl)
+      signInUrl.searchParams.set('callbackUrl', nextUrl.pathname)
+      return NextResponse.redirect(signInUrl)
+    }
+    if (userRole !== 'admin') {
+      return NextResponse.redirect(new URL('/', nextUrl))
+    }
+  }
+
+  return NextResponse.next()
+})
+
+export const config = {
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|images).*)',
+  ],
+}
+```
+
+**Auth Validation Schemas (`lib/validations/auth.ts`):**
+```typescript
+import { z } from 'zod'
+
+export const signUpSchema = z.object({
+  name: z.string().min(2).max(50),
+  email: z.string().email(),
+  password: z
+    .string()
+    .min(8)
+    .regex(/[A-Z]/, 'Must contain uppercase letter')
+    .regex(/[0-9]/, 'Must contain number'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+})
+
+export const signInSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+})
+```
+
+**Server Actions (`lib/actions/auth.actions.ts`):**
+```typescript
+'use server'
+
+import { signIn, signOut } from '@/auth'
+import { prisma } from '@/db/prisma'
+import { hashSync } from 'bcrypt-ts-edge'
+
+// Sign up with email verification
+export async function signUp(prevState: unknown, formData: FormData) {
+  const validatedData = signUpSchema.parse(data)
+
+  // Create user with emailVerified: null
+  await prisma.user.create({
+    data: {
+      name: validatedData.name,
+      email: validatedData.email,
+      password: hashSync(validatedData.password, 10),
+      role: 'user',
+      emailVerified: null, // Requires verification
+    },
+  })
+
+  // Send verification email
+  const token = await createVerificationToken(validatedData.email)
+  await sendVerificationEmail(validatedData.email, validatedData.name, token)
+
+  return { success: true, message: 'Check your email to verify account' }
+}
+
+// Sign in with credentials
+export async function signInWithCredentials(prevState: unknown, formData: FormData) {
+  const validatedData = signInSchema.parse(data)
+
+  await signIn('credentials', {
+    email: validatedData.email,
+    password: validatedData.password,
+    redirect: true,
+    redirectTo: '/dashboard',
+  })
+}
+
+// Sign in with OAuth
+export async function signInWithOAuth(provider: 'google' | 'github') {
+  await signIn(provider, { redirectTo: '/dashboard' })
+}
+
+// Sign out
+export async function signOutUser() {
+  await signOut({ redirectTo: '/' })
+}
+```
+
+**Sign-Up Form with Password Strength Indicator (`components/auth/sign-up-form.tsx`):**
+```typescript
+'use client'
+
+import { useActionState, useEffect, useState } from 'react'
+import { signUp, signInWithOAuth } from '@/lib/actions/auth.actions'
+
+export default function SignUpForm() {
+  const [state, formAction] = useActionState(signUp, undefined)
+  const [password, setPassword] = useState('')
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    message: '',
+    color: '',
+  })
+
+  // Password strength checker (5-point scale)
+  useEffect(() => {
+    if (!password) {
+      setPasswordStrength({ score: 0, message: '', color: '' })
+      return
+    }
+
+    let score = 0
+    const checks = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    }
+
+    if (checks.length) score++
+    if (checks.uppercase) score++
+    if (checks.lowercase) score++
+    if (checks.number) score++
+    if (checks.special) score++
+
+    let message = ''
+    let color = ''
+
+    if (score <= 2) {
+      message = 'Weak'
+      color = 'bg-red-500'
+    } else if (score === 3) {
+      message = 'Fair'
+      color = 'bg-yellow-500'
+    } else if (score === 4) {
+      message = 'Good'
+      color = 'bg-blue-500'
+    } else {
+      message = 'Strong'
+      color = 'bg-green-500'
+    }
+
+    setPasswordStrength({ score, message, color })
+  }, [password])
+
+  return (
+    <form action={formAction}>
+      {/* Password field */}
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      {/* Password strength indicator */}
+      {password && (
+        <div className="mt-2 space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${passwordStrength.color} transition-all`}
+                style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+              />
+            </div>
+            <span className="text-sm font-medium">{passwordStrength.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* OAuth buttons using .bind() */}
+      <form action={signInWithOAuth.bind(null, 'google')}>
+        <Button type="submit">Sign up with Google</Button>
+      </form>
+    </form>
+  )
+}
+```
+
+**Sign-In Form (`components/auth/sign-in-form.tsx`):**
+```typescript
+'use client'
+
+import { useActionState } from 'react'
+import { useFormStatus } from 'react-dom'
+import { signInWithCredentials, signInWithOAuth } from '@/lib/actions/auth.actions'
+
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? 'Signing in...' : 'Sign in'}
+    </Button>
+  )
+}
+
+export default function SignInForm() {
+  const [state, formAction] = useActionState(signInWithCredentials, undefined)
+
+  return (
+    <div className="space-y-6">
+      {/* Error Message */}
+      {state?.success === false && (
+        <div className="rounded-md bg-destructive/10 p-3">
+          {state.message}
+        </div>
+      )}
+
+      {/* Sign-in Form */}
+      <form action={formAction}>
+        {/* Email and Password fields */}
+
+        {/* Remember Me Checkbox */}
+        <div className="flex items-center space-x-2">
+          <input id="remember" name="remember" type="checkbox" />
+          <label htmlFor="remember">Remember me for 30 days</label>
+        </div>
+
+        <SubmitButton />
+      </form>
+
+      {/* OAuth Buttons */}
+      <div className="grid grid-cols-2 gap-4">
+        <form action={signInWithOAuth.bind(null, 'google')}>
+          <Button type="submit" variant="outline">Google</Button>
+        </form>
+        <form action={signInWithOAuth.bind(null, 'github')}>
+          <Button type="submit" variant="outline">GitHub</Button>
+        </form>
+      </div>
+    </div>
+  )
+}
+```
+
+**Security Features:**
+- ✅ Password hashing with bcrypt (10 rounds)
+- ✅ Email verification required before sign-in
+- ✅ OAuth providers auto-verify email (trusted providers)
+- ✅ JWT session strategy (30-day expiry)
+- ✅ Account linking enabled for OAuth providers
+- ✅ Role-based access control (admin vs user)
+- ✅ Protected routes via middleware
+- ✅ Callback URL preservation for post-login redirects
+
+**Environment Variables:**
+```env
+NEXTAUTH_SECRET=generate-with-npx-auth-secret
+NEXTAUTH_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+```
+
+**Testing Authentication:**
+```typescript
+// Test sign-up form
+describe('SignUpForm', () => {
+  it('should render password strength indicator', () => {
+    // Test password strength calculation
+  })
+
+  it('should show error for weak passwords', () => {
+    // Test validation
+  })
+})
+
+// Test sign-in form
+describe('SignInForm', () => {
+  it('should render remember me checkbox', () => {
+    // Test checkbox rendering
+  })
+
+  it('should handle OAuth sign-in', () => {
+    // Test OAuth flow
+  })
+})
+```
 
 #### State Management (Zustand)
 - **Installation**: `npm install zustand`
@@ -231,10 +635,184 @@ The project is in early development stage. Core documentation exists to guide de
 - **Route**: `app/api/uploadthing/route.ts`
 - **Usage**: Product images in admin panel
 
-#### Email (Resend)
-- **Installation**: `npm install resend react-email`
-- **Templates**: `emails/*.tsx` (React Email components)
-- **Use Cases**: Welcome, verification, password reset, order confirmation
+#### Email (Resend) - ✅ IMPLEMENTED
+- **Installation**: `npm install resend react-email @react-email/components` ✅
+- **Service**: Resend (https://resend.com) for transactional emails
+- **Templates**: HTML email templates with inline styles
+- **Use Cases**: Email verification, password reset, order confirmation
+
+**Implementation Details (TASK-106):**
+
+**Email Utilities (`lib/utils/email.ts`):**
+```typescript
+import { Resend } from 'resend'
+import { prisma } from '@/db/prisma'
+import crypto from 'crypto'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+// Generate secure verification token (32 bytes, base64url encoded)
+export function generateVerificationToken(): string {
+  return crypto.randomBytes(32).toString('base64url')
+}
+
+// Create token with 24-hour expiry
+export async function createVerificationToken(email: string): Promise<string> {
+  // Delete existing tokens for this email
+  await prisma.verificationToken.deleteMany({
+    where: { identifier: email },
+  })
+
+  const token = generateVerificationToken()
+  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
+  await prisma.verificationToken.create({
+    data: { identifier: email, token, expires },
+  })
+
+  return token
+}
+
+// Verify token (one-time use, deleted after verification)
+export async function verifyToken(email: string, token: string): Promise<boolean> {
+  const verificationToken = await prisma.verificationToken.findUnique({
+    where: { identifier_token: { identifier: email, token } },
+  })
+
+  if (!verificationToken) return false
+
+  // Check expiration
+  if (verificationToken.expires < new Date()) {
+    await prisma.verificationToken.delete({
+      where: { identifier_token: { identifier: email, token } },
+    })
+    return false
+  }
+
+  // Delete token (one-time use)
+  await prisma.verificationToken.delete({
+    where: { identifier_token: { identifier: email, token } },
+  })
+
+  return true
+}
+
+// Send verification email with HTML template
+export async function sendVerificationEmail(
+  email: string,
+  name: string,
+  token: string
+): Promise<void> {
+  const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL
+  const verificationUrl = `${baseUrl}/verify-email?token=${token}&email=${encodeURIComponent(email)}`
+
+  await resend.emails.send({
+    from: `${APP_NAME} <onboarding@resend.dev>`,
+    to: email,
+    subject: `Verify your ${APP_NAME} account`,
+    html: `<!-- Beautiful HTML email template -->`,
+  })
+}
+```
+
+**Email Verification Flow:**
+1. **Sign-up** → User creates account with `emailVerified: null`
+2. **Token Generation** → Creates secure 32-byte token, expires in 24 hours
+3. **Email Sent** → Sends HTML email with verification link via Resend
+4. **User Clicks Link** → Navigates to `/verify-email?token=xxx&email=xxx`
+5. **Token Validation** → Verifies token, checks expiration, deletes token (one-time use)
+6. **Update Database** → Sets `user.emailVerified = new Date()`
+7. **Redirect** → Auto-redirects to sign-in page after 3 seconds
+
+**Verify Email Page (`app/(auth)/verify-email/page.tsx`):**
+- Three states: Loading, Success, Error
+- Success: Shows checkmark, message, auto-redirect to sign-in
+- Error: Shows X icon, error message, resend email button
+- Visual feedback with colored icons (green/red)
+- Responsive design with Tailwind CSS
+
+**Security Features:**
+- ✅ Cryptographically secure tokens (32 bytes)
+- ✅ One-time use tokens (deleted after verification)
+- ✅ 24-hour token expiration
+- ✅ Email verification required before sign-in
+- ✅ OAuth users auto-verified (trusted providers)
+- ✅ Resend verification email functionality
+
+**Server Actions:**
+```typescript
+// Verify email with token
+export async function verifyEmail(email: string, token: string) {
+  const isValid = await verifyToken(email, token)
+  if (!isValid) {
+    return { success: false, message: 'Invalid or expired verification link' }
+  }
+
+  await prisma.user.update({
+    where: { email },
+    data: { emailVerified: new Date() },
+  })
+
+  return { success: true, message: 'Email verified successfully!' }
+}
+
+// Resend verification email
+export async function resendVerification(email: string) {
+  const user = await prisma.user.findUnique({ where: { email } })
+  if (!user) throw new Error('User not found')
+  if (user.emailVerified) throw new Error('Email already verified')
+
+  const token = await createVerificationToken(email)
+  await sendVerificationEmail(email, user.name, token)
+
+  return { success: true, message: 'Verification email sent!' }
+}
+```
+
+**Email Template Best Practices:**
+- Use inline CSS (many email clients don't support external stylesheets)
+- Gradient headers for visual appeal
+- Clear call-to-action buttons
+- Fallback text links for accessibility
+- Mobile-responsive design
+- Include expiration notice (24 hours)
+- Provide alternative action (resend email)
+
+**Environment Variables:**
+```env
+RESEND_API_KEY=re_...  # Get from https://resend.com/api-keys
+```
+
+**Testing Email Verification:**
+```typescript
+// Test token generation
+describe('generateVerificationToken', () => {
+  it('should generate unique tokens', () => {
+    const token1 = generateVerificationToken()
+    const token2 = generateVerificationToken()
+    expect(token1).not.toBe(token2)
+  })
+
+  it('should generate URL-safe tokens', () => {
+    const token = generateVerificationToken()
+    expect(token).toMatch(/^[A-Za-z0-9_-]+$/)
+  })
+})
+
+// Test token verification
+describe('verifyToken', () => {
+  it('should return false for expired token', async () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000)
+    // Mock token with expired date
+    const result = await verifyToken('test@example.com', 'expired-token')
+    expect(result).toBe(false)
+  })
+
+  it('should delete token after verification', async () => {
+    // Token should only work once
+  })
+})
+```
 
 #### Forms (React Hook Form + Zod)
 - **Installation**: `npm install react-hook-form @hookform/resolvers`
@@ -249,18 +827,32 @@ The project is in early development stage. Core documentation exists to guide de
 
 ### Folder Structure Updates
 
-New directories to be added:
+**Completed Directories:**
 ```
-app/(auth)/              # Auth pages (sign-in, sign-up, etc.)
-app/(dashboard)/         # User dashboard (profile, orders, addresses)
-app/(admin)/            # Admin panel (dashboard, products, orders, users)
-app/api/uploadthing/    # File upload route
-app/api/webhooks/       # Stripe webhooks
-lib/store/              # Zustand stores
-lib/validations/        # Zod schemas (auth, product, order, review)
-lib/hooks/              # Custom React hooks
-emails/                 # React Email templates
-types/                  # Additional TypeScript types (auth, cart, order)
+app/(auth)/sign-in/          # Sign-in page ✅
+app/(auth)/sign-up/          # Sign-up page ✅
+app/(auth)/verify-email/     # Email verification page ✅
+app/api/auth/[...nextauth]/  # Auth.js API routes (OAuth callbacks) ✅
+lib/validations/auth.ts      # Auth validation schemas ✅
+lib/actions/auth.actions.ts  # Auth server actions ✅
+lib/utils/email.ts           # Email utilities (Resend) ✅
+components/auth/             # Auth form components ✅
+__tests__/lib/validations/   # Validation schema tests ✅
+__tests__/lib/utils/         # Email utility tests ✅
+__tests__/components/auth/   # Auth component tests ✅
+```
+
+**Pending Directories:**
+```
+app/(auth)/reset-password/   # Password reset page (pending)
+app/(dashboard)/             # User dashboard (profile, orders, addresses)
+app/(admin)/                # Admin panel (dashboard, products, orders, users)
+app/api/uploadthing/        # File upload route
+app/api/webhooks/           # Stripe webhooks
+lib/store/                  # Zustand stores
+lib/hooks/                  # Custom React hooks
+emails/                     # React Email templates
+types/                      # Additional TypeScript types (cart, order)
 ```
 
 ### Database Schema Additions
@@ -338,7 +930,158 @@ export async function actionName(data: InputType) {
 }
 ```
 
-#### Client Components with Server Actions
+#### Authentication Forms with useActionState (TASK-104, TASK-105)
+```typescript
+'use client'
+
+import { useActionState } from 'react'
+import { useFormStatus } from 'react-dom'
+import { actionName } from '@/lib/actions/file.actions'
+
+// Submit button with loading state
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? 'Loading...' : 'Submit'}
+    </Button>
+  )
+}
+
+// Form component with useActionState
+export default function Form() {
+  const [state, formAction] = useActionState(actionName, undefined)
+
+  return (
+    <div>
+      {/* Error/Success Message */}
+      {state?.success === false && (
+        <div className="text-destructive">{state.message}</div>
+      )}
+      {state?.success === true && (
+        <div className="text-green-600">{state.message}</div>
+      )}
+
+      {/* Form */}
+      <form action={formAction}>
+        <input name="field1" required />
+        <input name="field2" required />
+        <SubmitButton />
+      </form>
+    </div>
+  )
+}
+```
+
+#### OAuth Form Actions with .bind() (TASK-104, TASK-105)
+```typescript
+'use client'
+
+import { signInWithOAuth } from '@/lib/actions/auth.actions'
+import { Button } from '@/components/ui/button'
+
+export default function OAuthButtons() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {/* Google OAuth */}
+      <form action={signInWithOAuth.bind(null, 'google')}>
+        <Button type="submit" variant="outline" className="w-full">
+          <GoogleIcon />
+          Google
+        </Button>
+      </form>
+
+      {/* GitHub OAuth */}
+      <form action={signInWithOAuth.bind(null, 'github')}>
+        <Button type="submit" variant="outline" className="w-full">
+          <GitHubIcon />
+          GitHub
+        </Button>
+      </form>
+    </div>
+  )
+}
+
+// Server Action
+export async function signInWithOAuth(provider: 'google' | 'github') {
+  'use server'
+  await signIn(provider, { redirectTo: '/dashboard' })
+}
+```
+
+#### Password Strength Indicator (TASK-104)
+```typescript
+'use client'
+
+import { useEffect, useState } from 'react'
+
+export default function PasswordField() {
+  const [password, setPassword] = useState('')
+  const [strength, setStrength] = useState({
+    score: 0,
+    message: '',
+    color: '',
+  })
+
+  useEffect(() => {
+    if (!password) {
+      setStrength({ score: 0, message: '', color: '' })
+      return
+    }
+
+    // 5-point scoring system
+    let score = 0
+    if (password.length >= 8) score++
+    if (/[A-Z]/.test(password)) score++
+    if (/[a-z]/.test(password)) score++
+    if (/[0-9]/.test(password)) score++
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++
+
+    // Determine strength
+    let message = '', color = ''
+    if (score <= 2) {
+      message = 'Weak'
+      color = 'bg-red-500'
+    } else if (score === 3) {
+      message = 'Fair'
+      color = 'bg-yellow-500'
+    } else if (score === 4) {
+      message = 'Good'
+      color = 'bg-blue-500'
+    } else {
+      message = 'Strong'
+      color = 'bg-green-500'
+    }
+
+    setStrength({ score, message, color })
+  }, [password])
+
+  return (
+    <div>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
+      {/* Visual strength indicator */}
+      {password && (
+        <div className="flex items-center gap-2">
+          <div className="h-2 w-full bg-gray-200 rounded-full">
+            <div
+              className={`h-full ${strength.color} transition-all`}
+              style={{ width: `${(strength.score / 5) * 100}%` }}
+            />
+          </div>
+          <span className="text-sm font-medium">{strength.message}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+#### Client Components with Server Actions (useTransition)
 ```typescript
 'use client'
 
