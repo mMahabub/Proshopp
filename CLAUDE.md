@@ -159,8 +159,11 @@ npx prisma validate         # Validate Prisma schema
 - `cn()` utility for className merging
 
 ## Image Handling
-- Remote images configured for `utfs.io` domain in `next.config.ts`
+- Remote images configured in `next.config.ts` using `remotePatterns`:
+  - `utfs.io` - UploadThing CDN for product images
+  - `lh3.googleusercontent.com` - Google OAuth profile pictures (path: `/a/**`)
 - Products support multiple images as string arrays
+- Next.js Image component optimizes all remote images automatically
 
 ## Environment Variables
 Required environment variables:
