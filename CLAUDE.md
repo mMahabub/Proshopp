@@ -194,6 +194,7 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-201: Cart database models (Cart and CartItem)
 - ✅ TASK-202: Zustand cart store with localStorage persistence
 - ✅ TASK-203: Cart server actions with stock validation
+- ✅ TASK-204: Add to Cart functionality with toast notifications
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -1024,6 +1025,235 @@ export const syncCartSchema = z.object({
 // - All tests passing (146 total tests in project)
 ```
 
+#### Toast Notifications (Sonner) - ✅ IMPLEMENTED (TASK-204)
+
+**Installation:**
+```bash
+npm install sonner
+```
+
+**Setup in Root Layout (`app/layout.tsx`):**
+```typescript
+import { Toaster } from "sonner"
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Toaster position="top-center" richColors />
+      </body>
+    </html>
+  )
+}
+```
+
+**Usage in Components:**
+```typescript
+import { toast } from 'sonner'
+
+// Success toast
+toast.success('Item added to cart')
+
+// Error toast
+toast.error('Something went wrong')
+
+// Info toast
+toast.info('Please sign in to continue')
+
+// Loading toast
+toast.loading('Processing...')
+```
+
+**Features:**
+- ✅ Rich colors for different toast types
+- ✅ Auto-dismiss after 4 seconds
+- ✅ Configurable position (top-center, bottom-right, etc.)
+- ✅ Stack multiple toasts
+- ✅ Lightweight and performant
+
+#### Add to Cart Functionality - ✅ IMPLEMENTED (TASK-204)
+
+**AddToCartButton Component (`components/shared/product/add-to-cart-button.tsx`):**
+
+```typescript
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { useCartStore } from '@/lib/store/cart-store'
+import { addToCart as addToCartAction } from '@/lib/actions/cart.actions'
+import { useSession } from 'next-auth/react'
+import { toast } from 'sonner'
+import { Plus } from 'lucide-react'
+
+interface AddToCartButtonProps {
+  product: {
+    id: string
+    name: string
+    slug: string
+    price: number
+    image: string
+    stock: number
+  }
+}
+
+export default function AddToCartButton({ product }: AddToCartButtonProps) {
+  const [quantity, setQuantity] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
+  const { addItem } = useCartStore()
+  const { data: session } = useSession()
+
+  const maxQuantity = Math.min(product.stock, 10)
+  const isOutOfStock = product.stock === 0
+
+  const handleAddToCart = async () => {
+    try {
+      setIsLoading(true)
+
+      // Add to local cart store (optimistic update)
+      addItem(
+        {
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          price: product.price,
+          image: product.image,
+          stock: product.stock,
+        },
+        quantity
+      )
+
+      toast.success('Added to cart')
+
+      // If user is authenticated, sync to database
+      if (session?.user) {
+        const result = await addToCartAction(product.id, quantity)
+
+        if (!result.success) {
+          toast.error(result.message)
+        }
+      }
+    } catch {
+      toast.error('Failed to add item to cart')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Quantity Selector */}
+      {!isOutOfStock && (
+        <div className="flex items-center justify-between">
+          <label htmlFor="quantity" className="text-sm text-gray-600">
+            Quantity
+          </label>
+          <select
+            id="quantity"
+            value={quantity}
+            onChange={(e) => setQuantity(Number(e.target.value))}
+            className="w-20 px-3 py-2 border border-gray-300 rounded-md"
+            disabled={isLoading}
+          >
+            {Array.from({ length: maxQuantity }, (_, i) => i + 1).map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Add to Cart Button */}
+      <Button
+        onClick={handleAddToCart}
+        disabled={isOutOfStock || isLoading}
+        className="w-full"
+      >
+        {isLoading ? (
+          <span>Adding...</span>
+        ) : (
+          <>
+            <Plus className="w-4 h-4 mr-2" />
+            Add to Cart
+          </>
+        )}
+      </Button>
+    </div>
+  )
+}
+```
+
+**Usage in Product Page (`app/(root)/product/[slug]/page.tsx`):**
+
+```typescript
+import AddToCartButton from '@/components/shared/product/add-to-cart-button'
+
+export default async function ProductPage({ params }) {
+  const product = await getProductBySlug(params.slug)
+
+  return (
+    <div>
+      {/* Product details */}
+
+      <AddToCartButton
+        product={{
+          id: product.id,
+          name: product.name,
+          slug: product.slug,
+          price: Number(product.price),
+          image: product.images[0],
+          stock: product.stock,
+        }}
+      />
+    </div>
+  )
+}
+```
+
+**SessionProvider Setup (`components/providers.tsx`):**
+
+```typescript
+'use client'
+
+import { SessionProvider } from 'next-auth/react'
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return <SessionProvider>{children}</SessionProvider>
+}
+```
+
+**Features:**
+- ✅ Quantity selector (1 to min(stock, 10))
+- ✅ Disabled when out of stock
+- ✅ Optimistic UI update (immediate feedback)
+- ✅ Sync to database if authenticated
+- ✅ Success/error toast notifications
+- ✅ Loading state while processing
+- ✅ Stock validation
+- ✅ Responsive design
+
+**Testing:**
+```typescript
+// 9 comprehensive tests covering:
+// - Quantity selector rendering and limits
+// - Out of stock state
+// - Adding to cart (authenticated and unauthenticated)
+// - Toast notifications
+// - Database sync
+// - Error handling
+// All tests passing (155 total tests in project)
+```
+
+**Flow:**
+1. User selects quantity (1-10 or max stock)
+2. User clicks "Add to Cart"
+3. Item immediately added to local cart store (Zustand)
+4. Success toast displayed
+5. If authenticated, sync to database in background
+6. If database sync fails, show error toast
+
 #### Payment Integration (Stripe)
 - **Installation**: `npm install stripe @stripe/stripe-js @stripe/react-stripe-js`
 - **Server**: `lib/utils/stripe.ts` - Stripe instance
@@ -1771,6 +2001,11 @@ lib/actions/cart.actions.ts            # Cart server actions with stock validati
 lib/validations/cart.ts                # Cart validation schemas ✅
 __tests__/lib/actions/cart.actions.test.ts  # Cart actions tests ✅
 __mocks__/auth.ts                      # Auth mock for testing ✅
+components/shared/product/add-to-cart-button.tsx  # Add to cart button with quantity selector ✅
+components/providers.tsx               # Client providers wrapper (SessionProvider) ✅
+__tests__/components/shared/product/add-to-cart-button.test.tsx  # Add to cart button tests ✅
+__mocks__/next-auth/react.ts           # next-auth mock for testing ✅
+__mocks__/sonner.ts                    # Sonner toast mock for testing ✅
 ```
 
 **Pending Directories:**

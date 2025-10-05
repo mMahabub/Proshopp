@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getProductBySlug } from '@/lib/actions/product.actions';
 import { notFound } from 'next/navigation';
 import ProductPrice from '@/components/shared/product/product-price';
 import ProductImages from '@/components/shared/product/product-images';
+import AddToCartButton from '@/components/shared/product/add-to-cart-button';
 import { Star } from 'lucide-react';
 
 const ProductDetailsPage = async (props: {
@@ -124,11 +124,16 @@ const ProductDetailsPage = async (props: {
                     </Badge>
                   )}
                 </div>
-                {product.stock > 0 && (
-                  <Button className="w-full bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200">
-                    Add To Cart
-                  </Button>
-                )}
+                <AddToCartButton
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    price: Number(product.price),
+                    image: product.images[0] || '/placeholder.png',
+                    stock: product.stock,
+                  }}
+                />
               </CardContent>
             </Card>
           </div>
