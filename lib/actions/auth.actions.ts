@@ -5,6 +5,12 @@ import { prisma } from '@/db/prisma'
 import { signUpSchema, signInSchema } from '@/lib/validations/auth'
 import { hashSync } from 'bcrypt-ts-edge'
 import { AuthError } from 'next-auth'
+import {
+  createVerificationToken,
+  sendVerificationEmail,
+  verifyToken,
+  resendVerificationEmail,
+} from '@/lib/utils/email'
 
 // Helper to check if error is a redirect
 function isRedirectError(error: unknown): boolean {
@@ -45,22 +51,31 @@ export async function signUp(prevState: unknown, formData: FormData) {
     // Hash password
     const hashedPassword = hashSync(validatedData.password, 10)
 
-    // Create user
+    // Create user with emailVerified as null (unverified)
     await prisma.user.create({
       data: {
         name: validatedData.name,
         email: validatedData.email,
         password: hashedPassword,
         role: 'user',
+        emailVerified: null,
       },
     })
 
-    // Automatically sign in the user
-    await signInWithCredentials(prevState, formData)
+    // Create verification token
+    const token = await createVerificationToken(validatedData.email)
+
+    // Send verification email
+    await sendVerificationEmail(
+      validatedData.email,
+      validatedData.name,
+      token
+    )
 
     return {
       success: true,
-      message: 'Account created successfully',
+      message:
+        'Account created successfully! Please check your email to verify your account.',
     }
   } catch (error) {
     if (isRedirectError(error)) {
@@ -153,5 +168,65 @@ export async function signOutUser() {
     }
 
     throw new Error('Failed to sign out')
+  }
+}
+
+// Verify email with token
+export async function verifyEmail(email: string, token: string) {
+  try {
+    // Verify token
+    const isValid = await verifyToken(email, token)
+
+    if (!isValid) {
+      return {
+        success: false,
+        message:
+          'Invalid or expired verification link. Please request a new one.',
+      }
+    }
+
+    // Update user's emailVerified field
+    await prisma.user.update({
+      where: { email },
+      data: {
+        emailVerified: new Date(),
+      },
+    })
+
+    return {
+      success: true,
+      message: 'Email verified successfully! You can now sign in.',
+    }
+  } catch (error) {
+    console.error('Error verifying email:', error)
+    return {
+      success: false,
+      message: 'An error occurred while verifying your email.',
+    }
+  }
+}
+
+// Resend verification email
+export async function resendVerification(email: string) {
+  try {
+    await resendVerificationEmail(email)
+
+    return {
+      success: true,
+      message:
+        'Verification email sent! Please check your inbox.',
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: error.message,
+      }
+    }
+
+    return {
+      success: false,
+      message: 'Failed to resend verification email.',
+    }
   }
 }

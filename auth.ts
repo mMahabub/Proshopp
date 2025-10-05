@@ -77,6 +77,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error('Invalid email or password')
         }
 
+        // Check if email is verified
+        if (!user.emailVerified) {
+          throw new Error(
+            'Please verify your email address before signing in. Check your inbox for the verification link.'
+          )
+        }
+
         // Verify password
         const isPasswordValid = compareSync(password, user.password)
 
@@ -143,7 +150,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     // Sign-in Callback - runs on sign-in attempt
     async signIn({ user, account }) {
-      // For OAuth providers, create user if doesn't exist
+      // For OAuth providers, ensure email is verified
       if (account?.provider === 'google' || account?.provider === 'github') {
         if (!user.email) {
           return false
@@ -154,13 +161,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: user.email },
         })
 
-        // If user doesn't exist, they will be created by the adapter
-        // If user exists, they will be linked to the OAuth account
+        // If user exists but emailVerified is null, set it to current time
+        // (OAuth providers have already verified the email)
+        if (existingUser && !existingUser.emailVerified) {
+          await prisma.user.update({
+            where: { email: user.email },
+            data: { emailVerified: new Date() },
+          })
+        }
+
         return true
       }
 
       // For credentials provider, user must exist and be verified
-      // (We'll add email verification in future tasks)
       return true
     },
   },
