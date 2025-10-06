@@ -179,7 +179,7 @@ Required environment variables:
 
 ## Project Status & Documentation
 
-### Current Completion: 24%
+### Current Completion: 26%
 The project is in early development stage. Core documentation exists to guide development:
 - **spec.md** - Feature specifications and requirements
 - **plan.md** - Architecture decisions and implementation strategy
@@ -201,6 +201,7 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-205: Cart page with item management
 - ✅ TASK-206: Cart icon with badge in header (hydration-safe)
 - ✅ TASK-207: Cart merge on login (guest cart → database cart)
+- ✅ TASK-301: Order database models (Order and OrderItem)
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -2595,9 +2596,86 @@ npx prisma migrate dev --name add_cart_models
 # Applied: 20251005220902_add_cart_models
 ```
 
+**Order & OrderItem (TASK-301):**
+```prisma
+model Order {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderNumber     String    @unique
+  userId          String    @db.Uuid
+  status          String    @default("pending")  // pending, paid, shipped, delivered, cancelled
+  subtotal        Decimal   @db.Decimal(12, 2)
+  tax             Decimal   @db.Decimal(12, 2)
+  shippingCost    Decimal   @default(0) @db.Decimal(12, 2)
+  totalPrice      Decimal   @db.Decimal(12, 2)
+  shippingAddress Json      @db.Json  // Snapshot of address at time of order
+  paymentMethod   String?
+  paymentResult   Json?     @db.Json  // Stripe payment details
+  isPaid          Boolean   @default(false)
+  paidAt          DateTime? @db.Timestamp(6)
+  isDelivered     Boolean   @default(false)
+  deliveredAt     DateTime? @db.Timestamp(6)
+  createdAt       DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime  @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+model OrderItem {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String   @db.Uuid
+  productId String   @db.Uuid
+  name      String   // Product snapshot - preserves product info at time of order
+  slug      String
+  image     String
+  price     Decimal  @db.Decimal(12, 2)
+  quantity  Int
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+}
+```
+
+**Features:**
+- ✅ One-to-many relationship between User and Orders (users can have multiple orders)
+- ✅ Order items snapshot product information at time of purchase (name, slug, image, price)
+- ✅ Order number for easy reference and tracking
+- ✅ Comprehensive order status tracking (pending → paid → shipped → delivered)
+- ✅ Payment tracking with isPaid flag and paidAt timestamp
+- ✅ Delivery tracking with isDelivered flag and deliveredAt timestamp
+- ✅ Shipping address stored as JSON snapshot (preserves address at time of order)
+- ✅ Payment result stored as JSON for Stripe integration
+- ✅ Price breakdown: subtotal, tax, shipping cost, and total price
+- ✅ Cascade delete removes order items when order deleted
+- ✅ Restrict delete prevents product deletion if referenced in orders (data integrity)
+- ✅ Indexes for performance on userId, status, orderNumber, and foreign keys
+
+**Migration:**
+```bash
+npx prisma migrate dev --name add_order_models
+# Applied: 20251006012233_add_order_models
+```
+
+**Design Decisions:**
+- **Product Snapshots**: OrderItem stores product name, slug, image, and price to preserve order history even if products are updated or deleted later
+- **Address Snapshot**: shippingAddress stored as JSON to capture full address at time of order, independent of user's current address
+- **Payment Result**: Stored as JSON to accommodate various Stripe response formats
+- **Order Status**: String field allows for flexible workflow (pending/paid/shipped/delivered/cancelled)
+- **Restrict on Product Delete**: Prevents accidental deletion of products that appear in historical orders
+- **Multiple Indexes**: Optimized for common queries (user's orders, orders by status, order number lookup)
+
 #### Planned Models (See spec.md)
-1. ✅ **Cart & CartItem** - Shopping cart with items (COMPLETED)
-2. **Order & OrderItem** - Orders with item snapshots
+1. ✅ **Cart & CartItem** - Shopping cart with items (COMPLETED - TASK-201)
+2. ✅ **Order & OrderItem** - Orders with item snapshots (COMPLETED - TASK-301)
 3. **Review** - Product reviews and ratings
 4. **Category** (optional) - Product categories
 
