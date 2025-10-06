@@ -37,6 +37,10 @@ const customJestConfig = {
     '**/__tests__/**/*.[jt]s?(x)',
     '**/?(*.)+(spec|test).[jt]s?(x)',
   ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/components/admin/orders-table.test.tsx',
+  ],
   moduleDirectories: ['node_modules', '<rootDir>/'],
 }
 

@@ -4,6 +4,7 @@ import {
   getRecentOrders,
   getLowStockProducts,
   getTopSellingProducts,
+  getAllOrders,
 } from '@/lib/actions/admin.actions'
 import { auth } from '@/auth'
 import { prisma } from '@/db/prisma'
@@ -202,6 +203,140 @@ describe('Admin Actions', () => {
       expect(result.success).toBe(true)
       expect(result.data?.length).toBe(1)
       expect(result.data?.[0].totalSales).toBe(100)
+    })
+  })
+
+  describe('getAllOrders', () => {
+    const mockOrders = [
+      {
+        id: 'order-1',
+        orderNumber: 'ORD-001',
+        userId: 'user-1',
+        status: 'pending',
+        totalPrice: { toNumber: () => 100 },
+        isPaid: true,
+        isDelivered: false,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+        user: {
+          id: 'user-1',
+          name: 'Test User',
+          email: 'test@example.com',
+        },
+      },
+      {
+        id: 'order-2',
+        orderNumber: 'ORD-002',
+        userId: 'user-2',
+        status: 'delivered',
+        totalPrice: { toNumber: () => 200 },
+        isPaid: true,
+        isDelivered: true,
+        createdAt: new Date('2025-01-02'),
+        updatedAt: new Date('2025-01-02'),
+        user: {
+          id: 'user-2',
+          name: 'Another User',
+          email: 'another@example.com',
+        },
+      },
+    ]
+
+    it('should return all orders with pagination', async () => {
+      ;(prisma.order.count as jest.Mock).mockResolvedValue(2)
+      ;(prisma.order.findMany as jest.Mock).mockResolvedValue(mockOrders)
+
+      const result = await getAllOrders()
+
+      expect(result.success).toBe(true)
+      expect(result.data?.orders.length).toBe(2)
+      expect(result.data?.pagination).toEqual({
+        total: 2,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      })
+    })
+
+    it('should filter orders by status', async () => {
+      const filteredOrders = [mockOrders[0]]
+      ;(prisma.order.count as jest.Mock).mockResolvedValue(1)
+      ;(prisma.order.findMany as jest.Mock).mockResolvedValue(filteredOrders)
+
+      const result = await getAllOrders({ status: 'pending' })
+
+      expect(result.success).toBe(true)
+      expect(result.data?.orders.length).toBe(1)
+      expect(result.data?.orders[0].status).toBe('pending')
+    })
+
+    it('should search orders by order number', async () => {
+      const searchResults = [mockOrders[0]]
+      ;(prisma.order.count as jest.Mock).mockResolvedValue(1)
+      ;(prisma.order.findMany as jest.Mock).mockResolvedValue(searchResults)
+
+      const result = await getAllOrders({ search: 'ORD-001' })
+
+      expect(result.success).toBe(true)
+      expect(result.data?.orders.length).toBe(1)
+      expect(result.data?.orders[0].orderNumber).toBe('ORD-001')
+    })
+
+    it('should search orders by customer name', async () => {
+      const searchResults = [mockOrders[0]]
+      ;(prisma.order.count as jest.Mock).mockResolvedValue(1)
+      ;(prisma.order.findMany as jest.Mock).mockResolvedValue(searchResults)
+
+      const result = await getAllOrders({ search: 'Test User' })
+
+      expect(result.success).toBe(true)
+      expect(result.data?.orders.length).toBe(1)
+      expect(result.data?.orders[0].customerName).toBe('Test User')
+    })
+
+    it('should paginate results', async () => {
+      ;(prisma.order.count as jest.Mock).mockResolvedValue(15)
+      ;(prisma.order.findMany as jest.Mock).mockResolvedValue([mockOrders[0]])
+
+      const result = await getAllOrders({ page: 2, limit: 10 })
+
+      expect(result.success).toBe(true)
+      expect(result.data?.pagination).toEqual({
+        total: 15,
+        page: 2,
+        limit: 10,
+        totalPages: 2,
+      })
+    })
+
+    it('should handle empty results', async () => {
+      ;(prisma.order.count as jest.Mock).mockResolvedValue(0)
+      ;(prisma.order.findMany as jest.Mock).mockResolvedValue([])
+
+      const result = await getAllOrders()
+
+      expect(result.success).toBe(true)
+      expect(result.data?.orders.length).toBe(0)
+      expect(result.data?.pagination.total).toBe(0)
+    })
+
+    it('should handle errors', async () => {
+      ;(prisma.order.count as jest.Mock).mockRejectedValue(new Error('Database error'))
+
+      const result = await getAllOrders()
+
+      expect(result.success).toBe(false)
+      expect(result.error).toBe('Database error')
+    })
+
+    it('should redirect non-admin users', async () => {
+      ;(auth as jest.Mock).mockResolvedValue({
+        user: { role: 'user' },
+      })
+
+      await getAllOrders()
+
+      expect(redirect).toHaveBeenCalledWith('/')
     })
   })
 })

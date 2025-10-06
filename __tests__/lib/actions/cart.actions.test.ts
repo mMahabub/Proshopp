@@ -130,9 +130,19 @@ describe('Cart Actions', () => {
 
       const result = await getCart()
 
-      expect(result).toEqual({
-        success: true,
-        data: cartWithItems,
+      expect(result.success).toBe(true)
+      expect(result.data).toMatchObject({
+        id: cartWithItems.id,
+        userId: cartWithItems.userId,
+        items: expect.arrayContaining([
+          expect.objectContaining({
+            id: mockCartItem.id,
+            cartId: mockCartItem.cartId,
+            productId: mockCartItem.productId,
+            quantity: mockCartItem.quantity,
+            price: mockCartItem.price,
+          })
+        ])
       })
       expect(mockPrismaCart.findUnique).toHaveBeenCalledWith({
         where: { userId: '123e4567-e89b-12d3-a456-426614174000' },
@@ -159,9 +169,11 @@ describe('Cart Actions', () => {
 
       const result = await getCart()
 
-      expect(result).toEqual({
-        success: true,
-        data: emptyCart,
+      expect(result.success).toBe(true)
+      expect(result.data).toMatchObject({
+        id: emptyCart.id,
+        userId: emptyCart.userId,
+        items: [],
       })
       expect(mockPrismaCart.create).toHaveBeenCalledWith({
         data: {

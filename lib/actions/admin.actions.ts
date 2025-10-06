@@ -298,3 +298,110 @@ export async function getTopSellingProducts() {
     }
   }
 }
+
+/**
+ * Get all orders with pagination, filtering, and search
+ */
+export async function getAllOrders(params?: {
+  page?: number
+  limit?: number
+  status?: string
+  search?: string
+}) {
+  await verifyAdmin()
+
+  try {
+    const page = params?.page || 1
+    const limit = params?.limit || 10
+    const skip = (page - 1) * limit
+
+    // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {}
+
+    if (params?.status) {
+      where.status = params.status
+    }
+
+    if (params?.search) {
+      where.OR = [
+        {
+          orderNumber: {
+            contains: params.search,
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          user: {
+            name: {
+              contains: params.search,
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+        {
+          user: {
+            email: {
+              contains: params.search,
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+      ]
+    }
+
+    // Get total count
+    const totalCount = await prisma.order.count({ where })
+
+    // Get orders
+    const orders = await prisma.order.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
+    })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formattedOrders = orders.map((order: any) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      customerName: order.user.name,
+      customerEmail: order.user.email,
+      totalPrice: order.totalPrice.toNumber(),
+      status: order.status,
+      isPaid: order.isPaid,
+      isDelivered: order.isDelivered,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+    }))
+
+    return {
+      success: true,
+      data: {
+        orders: formattedOrders,
+        pagination: {
+          total: totalCount,
+          page,
+          limit,
+          totalPages: Math.ceil(totalCount / limit),
+        },
+      },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch orders',
+    }
+  }
+}
