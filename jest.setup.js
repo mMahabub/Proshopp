@@ -30,3 +30,8 @@ if (typeof global.Response === 'undefined') {
 if (typeof global.Headers === 'undefined') {
   global.Headers = Map
 }
+
+// Mock Stripe environment variables for tests
+process.env.STRIPE_SECRET_KEY = 'sk_test_mock_secret_key_for_testing'
+process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY =
+  'pk_test_mock_publishable_key_for_testing'

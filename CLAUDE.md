@@ -179,7 +179,7 @@ Required environment variables:
 
 ## Project Status & Documentation
 
-### Current Completion: 26%
+### Current Completion: 28%
 The project is in early development stage. Core documentation exists to guide development:
 - **spec.md** - Feature specifications and requirements
 - **plan.md** - Architecture decisions and implementation strategy
@@ -202,6 +202,7 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-206: Cart icon with badge in header (hydration-safe)
 - ✅ TASK-207: Cart merge on login (guest cart → database cart)
 - ✅ TASK-301: Order database models (Order and OrderItem)
+- ✅ TASK-302: Stripe installation and configuration
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -1775,13 +1776,194 @@ npm test
 - ✅ `__tests__/lib/actions/cart-merge.test.ts` - Comprehensive test suite (10 tests)
 - ✅ `jest.setup.js` - Added Request/Response polyfills and TextEncoder/TextDecoder
 
-#### Payment Integration (Stripe)
-- **Installation**: `npm install stripe @stripe/stripe-js @stripe/react-stripe-js`
-- **Server**: `lib/utils/stripe.ts` - Stripe instance
-- **Server Actions**: `lib/actions/payment.actions.ts` - createPaymentIntent
-- **Client**: Stripe Elements for payment form
-- **Webhook**: `app/api/webhooks/stripe/route.ts` - Handle payment events
-- **Flow**: Cart → Address → Payment → Confirmation
+#### Payment Integration (Stripe) - ✅ CONFIGURED (TASK-302)
+
+**Installation:**
+```bash
+npm install stripe @stripe/stripe-js @stripe/react-stripe-js
+```
+
+**Dependencies Installed:**
+- ✅ `stripe` (v18+) - Server-side Stripe SDK for payment intents, customers, etc.
+- ✅ `@stripe/stripe-js` - Client-side Stripe.js loader (publishable key)
+- ✅ `@stripe/react-stripe-js` - React components for Stripe Elements
+
+**Configuration Files:**
+
+**Server-Side Configuration (`lib/utils/stripe.ts`):**
+```typescript
+import Stripe from 'stripe'
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY is not defined in environment variables')
+}
+
+/**
+ * Stripe instance configured for server-side operations
+ * - Uses secret key for full API access
+ * - Configured for API version 2025-09-30.clover
+ * - TypeScript enabled for type safety
+ */
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: '2025-09-30.clover',
+  typescript: true,
+})
+
+/**
+ * Convert dollars to cents for Stripe API
+ * @param amount - Amount in dollars
+ * @returns Amount in cents (smallest currency unit)
+ */
+export function formatAmountForStripe(amount: number): number {
+  return Math.round(amount * 100)
+}
+
+/**
+ * Convert cents to dollars from Stripe API
+ * @param amount - Amount in cents
+ * @returns Amount in dollars
+ */
+export function formatAmountFromStripe(amount: number): number {
+  return amount / 100
+}
+```
+
+**Client-Side Configuration (`lib/utils/stripe-client.ts`):**
+```typescript
+import { loadStripe, Stripe } from '@stripe/stripe-js'
+
+if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+  throw new Error(
+    'NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is not defined in environment variables'
+  )
+}
+
+/**
+ * Singleton Stripe instance for client-side operations
+ * - Lazy loaded on first call
+ * - Cached to prevent multiple loadStripe calls
+ * - Uses publishable key (safe to expose to client)
+ */
+let stripePromise: Promise<Stripe | null>
+
+export const getStripe = (): Promise<Stripe | null> => {
+  if (!stripePromise) {
+    stripePromise = loadStripe(
+      process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
+    )
+  }
+  return stripePromise
+}
+```
+
+**Environment Variables (`.env`):**
+```env
+# Stripe Secret Key (Server-Side Only)
+# Get from: https://dashboard.stripe.com/apikeys
+# Use test mode keys for development (starts with sk_test_)
+STRIPE_SECRET_KEY="sk_test_your_secret_key_here"
+
+# Stripe Publishable Key (Client-Side Safe)
+# Get from: https://dashboard.stripe.com/apikeys
+# Use test mode keys for development (starts with pk_test_)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_your_publishable_key_here"
+
+# Stripe Webhook Secret (for webhook signature verification)
+# Get from: https://dashboard.stripe.com/webhooks
+STRIPE_WEBHOOK_SECRET="whsec_your_webhook_secret_here"
+```
+
+**Key Features:**
+- ✅ **Server-Side**: Full Stripe API access with secret key
+- ✅ **Client-Side**: Secure publishable key for Stripe.js
+- ✅ **Singleton Pattern**: Client-side Stripe instance cached to prevent redundant loading
+- ✅ **Currency Utilities**: Convert between dollars and cents (Stripe uses smallest currency unit)
+- ✅ **TypeScript**: Full type safety with Stripe SDK types
+- ✅ **Latest API Version**: 2025-09-30.clover
+- ✅ **Environment Validation**: Throws errors if keys are missing
+
+**Usage Examples:**
+
+**Server Actions (Payment Intent):**
+```typescript
+'use server'
+
+import { stripe, formatAmountForStripe } from '@/lib/utils/stripe'
+import { auth } from '@/auth'
+
+export async function createPaymentIntent(amount: number) {
+  const session = await auth()
+  if (!session?.user) {
+    return { success: false, message: 'Unauthorized' }
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: formatAmountForStripe(amount), // Convert $10.99 → 1099 cents
+      currency: 'usd',
+      metadata: {
+        userId: session.user.id,
+      },
+    })
+
+    return {
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+    }
+  } catch (error) {
+    return { success: false, message: 'Failed to create payment intent' }
+  }
+}
+```
+
+**Client Component (Checkout Form):**
+```typescript
+'use client'
+
+import { Elements } from '@stripe/react-stripe-js'
+import { getStripe } from '@/lib/utils/stripe-client'
+import CheckoutForm from './checkout-form'
+
+export default function CheckoutPage({ clientSecret }: { clientSecret: string }) {
+  const stripePromise = getStripe()
+
+  return (
+    <Elements stripe={stripePromise} options={{ clientSecret }}>
+      <CheckoutForm />
+    </Elements>
+  )
+}
+```
+
+**Testing:**
+```bash
+npm test
+
+# Stripe Tests (17 tests):
+# - Server-side currency conversion (dollars ↔ cents)
+# - Round-trip conversion precision
+# - Client-side Stripe loader singleton pattern
+# - Concurrent call handling
+# - Null handling
+# All tests passing (227 total tests)
+```
+
+**Security Best Practices:**
+- ✅ **Never expose secret key**: Only use in server-side code
+- ✅ **Use test keys in development**: Start with `sk_test_` and `pk_test_`
+- ✅ **Webhook signature verification**: Validate webhook authenticity (see webhook section)
+- ✅ **Environment variable validation**: Fail fast if keys are missing
+- ✅ **Client-side safety**: Only publishable key exposed to browser
+
+**Next Steps:**
+- **TASK-303**: Create checkout address page
+- **TASK-304**: Create payment page with Stripe Elements
+- **TASK-307**: Create Stripe webhook handler for payment events
+
+**Resources:**
+- [Stripe API Reference](https://stripe.com/docs/api)
+- [Stripe Testing Cards](https://stripe.com/docs/testing#cards)
+- [Stripe Elements React](https://stripe.com/docs/stripe-js/react)
 
 #### File Upload (UploadThing)
 - **Installation**: `npm install uploadthing @uploadthing/react`
