@@ -7739,12 +7739,21 @@ return {
 
 ✅ **TypeScript:** No errors (288 lines of new code type-checked)
 ✅ **ESLint:** No warnings (proper eslint-disable comments for `any` types)
-✅ **Tests:** 537 passing, 4 skipped, 3 pre-existing failures (98.9% pass rate)
+✅ **Tests:** 540 passing, 4 skipped (99.3% pass rate - improved from 98.9%)
   - ✅ 8/8 new getAllOrders tests passing
   - ✅ 2 cart action tests fixed (Decimal serialization side effect)
+  - ✅ 3 pre-existing admin.actions tests fixed (Decimal mock objects)
   - ⏸️ 16 OrdersTable component tests written (excluded due to Jest ESM config)
-  - ❌ 3 pre-existing admin.actions.ts test failures (unrelated to TASK-403)
 ✅ **Build:** Success, `/admin/orders` route 16.9 kB (157 kB First Load JS)
+
+**Initial State (before fixes):**
+- Tests: 537 passing, 3 failed (getDashboardMetrics, getSalesChartData, getRecentOrders)
+
+**Final State (after fixes):**
+- Tests: 540 passing, 0 failed ✅
+- All TASK-402 dashboard tests: 6/6 passing
+- All TASK-403 orders tests: 8/8 passing
+- Combined admin.actions tests: 17/17 passing
 
 **Build Output:**
 ```
@@ -7902,7 +7911,33 @@ TASK-403 complete! Admin orders management page now provides comprehensive order
 **Test Coverage:**
 - getAllOrders: 8/8 tests passing ✅
 - OrdersTable: 16 tests written (excluded from run)
-- Cart actions: 2 tests fixed
+- Cart actions: 2 tests fixed (Decimal serialization)
+- Pre-existing tests: Fixed 3 TASK-402 admin.actions tests (Decimal mocks)
+
+**Final Test Results:**
+- ✅ 540 tests passing (improved from 537)
+- ⏸️ 4 tests skipped
+- ✅ 99.3% pass rate
+- ✅ 17/17 admin.actions tests passing (all TASK-402 + TASK-403 tests)
+
+**Post-Implementation Fixes:**
+During TASK-403 implementation, discovered and fixed 3 pre-existing test failures in TASK-402:
+1. **getDashboardMetrics test** - Mock returned plain number instead of Decimal object
+2. **getSalesChartData test** - Mock returned plain number instead of Decimal object
+3. **getRecentOrders test** - Mock returned plain number instead of Decimal object
+
+**Root Cause:** Tests were mocking Decimal fields as plain JavaScript numbers, but Prisma code calls `.toNumber()` method on Decimal objects.
+
+**Fix Applied:**
+```typescript
+// Before (incorrect):
+{ totalPrice: 5000 }
+
+// After (correct):
+{ totalPrice: { toNumber: () => 5000 } }
+```
+
+This fix ensures test mocks accurately represent Prisma's Decimal type behavior.
 
 ---
 
