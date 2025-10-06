@@ -9,6 +9,7 @@ import {
   syncCartSchema,
 } from '@/lib/validations/cart'
 import { revalidatePath } from 'next/cache'
+import { convertToPlainObject } from '@/lib/utils'
 
 // Helper to check if error is a redirect
 function isRedirectError(error: unknown): boolean {
@@ -65,7 +66,7 @@ export async function getCart() {
 
     return {
       success: true,
-      data: cart,
+      data: convertToPlainObject(cart),
     }
   } catch (error) {
     if (isRedirectError(error)) {
@@ -606,7 +607,7 @@ export async function mergeGuestCart(
     return {
       success: true,
       message: 'Cart merged successfully',
-      data: mergedCart,
+      data: convertToPlainObject(mergedCart),
     }
   } catch (error) {
     if (isRedirectError(error)) {
