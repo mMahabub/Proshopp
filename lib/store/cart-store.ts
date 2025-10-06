@@ -65,6 +65,29 @@ export const useCartStore = create<CartState>()(
         const { items } = get()
         return items.reduce((count, item) => count + item.quantity, 0)
       },
+
+      // Get cart items in format needed for cart merge
+      getCartItemsForSync: () => {
+        const { items } = get()
+        return items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+        }))
+      },
+
+      // Load cart items from database after merge (replaces local cart)
+      loadCartFromDB: (dbCartItems) => {
+        const cartItems = dbCartItems.map((item) => ({
+          id: item.product.id,
+          name: item.product.name,
+          slug: item.product.slug,
+          price: Number(item.price), // Convert Decimal to number
+          quantity: item.quantity,
+          image: item.product.images?.[0] || '/placeholder.png',
+          stock: item.product.stock,
+        }))
+        set({ items: cartItems })
+      },
     }),
     {
       name: 'cart-storage',

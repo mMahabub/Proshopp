@@ -505,3 +505,124 @@ export async function clearCart() {
     }
   }
 }
+
+/**
+ * Merge guest cart (from localStorage) with user's database cart on login
+ * This combines items from both carts, summing quantities for duplicates
+ */
+export async function mergeGuestCart(
+  guestItems: { productId: string; quantity: number }[]
+) {
+  try {
+    const session = await auth()
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: 'You must be signed in to merge your cart',
+      }
+    }
+
+    // Validate input
+    const validatedData = syncCartSchema.parse({ items: guestItems })
+
+    // Find or create cart for user
+    let cart = await prisma.cart.findUnique({
+      where: { userId: session.user.id },
+    })
+
+    if (!cart) {
+      cart = await prisma.cart.create({
+        data: {
+          userId: session.user.id,
+        },
+      })
+    }
+
+    // Process each item from guest cart
+    for (const item of validatedData.items) {
+      // Check if product exists and has sufficient stock
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId },
+      })
+
+      if (!product) {
+        continue // Skip if product doesn't exist
+      }
+
+      if (product.stock < item.quantity) {
+        continue // Skip if insufficient stock
+      }
+
+      // Check if item already exists in DB cart
+      const existingItem = await prisma.cartItem.findUnique({
+        where: {
+          cartId_productId: {
+            cartId: cart.id,
+            productId: item.productId,
+          },
+        },
+      })
+
+      if (existingItem) {
+        // Update quantity (add to existing, cap at stock)
+        await prisma.cartItem.update({
+          where: { id: existingItem.id },
+          data: {
+            quantity: Math.min(
+              existingItem.quantity + item.quantity,
+              product.stock
+            ),
+            price: product.price,
+          },
+        })
+      } else {
+        // Create new cart item
+        await prisma.cartItem.create({
+          data: {
+            cartId: cart.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: product.price,
+          },
+        })
+      }
+    }
+
+    // Fetch and return the merged cart with all items
+    const mergedCart = await prisma.cart.findUnique({
+      where: { userId: session.user.id },
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+      },
+    })
+
+    revalidatePath('/cart')
+
+    return {
+      success: true,
+      message: 'Cart merged successfully',
+      data: mergedCart,
+    }
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error
+    }
+
+    if (error instanceof Error) {
+      return {
+        success: false,
+        message: error.message,
+      }
+    }
+
+    return {
+      success: false,
+      message: 'Failed to merge cart',
+    }
+  }
+}

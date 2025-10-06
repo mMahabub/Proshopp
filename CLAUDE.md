@@ -199,6 +199,8 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-203: Cart server actions with stock validation
 - ✅ TASK-204: Add to Cart functionality with toast notifications
 - ✅ TASK-205: Cart page with item management
+- ✅ TASK-206: Cart icon with badge in header (hydration-safe)
+- ✅ TASK-207: Cart merge on login (guest cart → database cart)
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -1636,6 +1638,141 @@ npm test
 4. Zustand store subscription updates badge in real-time on cart changes
 5. Clicking anywhere on the button navigates to `/cart` page
 6. Component can be customized with className prop for different contexts
+
+#### Cart Merge on Login - ✅ IMPLEMENTED (TASK-207)
+
+**Overview:**
+When a user adds items to their cart while not logged in (guest cart stored in localStorage via Zustand), those items are automatically merged with their database cart when they sign in. This ensures no cart items are lost during the authentication process.
+
+**Implementation Components:**
+
+**1. Server Action (`lib/actions/cart.actions.ts`):**
+```typescript
+export async function mergeGuestCart(
+  guestItems: { productId: string; quantity: number }[]
+)
+```
+
+**Features:**
+- ✅ Validates user authentication
+- ✅ Finds or creates user's cart
+- ✅ Validates product existence and stock for each guest cart item
+- ✅ Merges items by summing quantities for duplicate products
+- ✅ Caps merged quantity at available stock
+- ✅ Skips items with insufficient stock or non-existent products
+- ✅ Returns merged cart with all items and product details
+- ✅ Uses Zod validation (syncCartSchema) requiring UUID productId
+
+**2. Cart Store Methods (`lib/store/cart-store.ts`):**
+```typescript
+// Get cart items in format needed for merging
+getCartItemsForSync: () => { productId: string; quantity: number }[]
+
+// Load merged cart from DB and replace localStorage cart
+loadCartFromDB: (dbCartItems: DBCartItem[]) => void
+```
+
+**3. Client Hook (`lib/hooks/use-cart-merge.ts`):**
+```typescript
+export function useCartMerge()
+```
+
+**Features:**
+- ✅ Automatically triggers on user sign-in (status === 'authenticated')
+- ✅ Uses `useRef` to ensure merge happens only once per session
+- ✅ Only merges if guest cart has items (skips if empty)
+- ✅ Resets merge flag on sign-out
+- ✅ Handles Prisma Decimal type conversion with proper type assertions
+
+**4. Integration (`components/cart-merge-handler.tsx` & `components/providers.tsx`):**
+```typescript
+<SessionProvider>
+  <CartMergeHandler />  {/* Runs useCartMerge hook */}
+  {children}
+</SessionProvider>
+```
+
+**Merge Flow:**
+1. User browses as guest, adds items to cart (stored in localStorage via Zustand)
+2. User signs in (Google OAuth, GitHub OAuth, or credentials)
+3. `useCartMerge` hook detects `status === 'authenticated'`
+4. Hook calls `getCartItemsForSync()` to get guest cart items
+5. Server action `mergeGuestCart()` processes each item:
+   - Validates product exists and has sufficient stock
+   - If product already in DB cart: adds quantities (capped at stock)
+   - If new product: creates new cart item
+   - Skips invalid products or insufficient stock
+6. Server returns merged cart with all items
+7. Hook calls `loadCartFromDB()` to replace localStorage cart with merged DB cart
+8. User sees all their items (both guest and previous) in cart
+
+**Type Definitions (`types/cart.ts`):**
+```typescript
+export interface DBCartItem {
+  id: string
+  cartId: string
+  productId: string
+  quantity: number
+  price: Decimal  // Prisma Decimal type
+  product: {
+    id: string
+    name: string
+    slug: string
+    price: Decimal
+    stock: number
+    images: string[]
+  }
+}
+
+export interface CartState {
+  // ... existing methods
+  getCartItemsForSync: () => { productId: string; quantity: number }[]
+  loadCartFromDB: (dbCartItems: DBCartItem[]) => void
+}
+```
+
+**Testing (`__tests__/lib/actions/cart-merge.test.ts`):**
+```bash
+npm test
+
+# Cart Merge Tests (10 tests):
+# - Authentication requirement
+# - Empty guest cart handling
+# - Cart creation for new users
+# - Item merging with empty DB cart
+# - Quantity summing for duplicate items
+# - Stock validation (insufficient stock)
+# - Stock validation (cap merged quantity at available stock)
+# - Non-existent product handling
+# - Return value structure
+
+# All tests use proper UUID mocks for productId validation
+# All tests mock revalidatePath to avoid Next.js static generation errors
+```
+
+**Key Implementation Details:**
+- **Prisma Decimal Handling:** Uses type assertion `as unknown as DBCartItem[]` for Decimal conversion
+- **Hydration Safety:** Hook only runs client-side after session loads
+- **One-Time Execution:** `useRef` prevents duplicate merges during session
+- **Stock Safety:** Never exceeds available product stock
+- **Error Handling:** Gracefully skips invalid items, continues with valid ones
+- **Validation:** Uses existing `syncCartSchema` requiring UUID productIds
+
+**Testing Improvements:**
+- Added `jest.mock('next/cache')` to mock `revalidatePath`
+- Used valid UUIDs in test fixtures (e.g., `'550e8400-e29b-41d4-a716-446655440000'`)
+- Added global Request/Response polyfills in `jest.setup.js` for Next.js compatibility
+- Fixed `prisma.cart.findUnique` mocks to account for both initial and final cart fetch
+
+**File Changes:**
+- ✅ `lib/actions/cart.actions.ts` - Added `mergeGuestCart` function
+- ✅ `lib/store/cart-store.ts` - Added `getCartItemsForSync` and `loadCartFromDB`
+- ✅ `lib/hooks/use-cart-merge.ts` - Created cart merge hook
+- ✅ `components/cart-merge-handler.tsx` - Created handler component
+- ✅ `components/providers.tsx` - Integrated CartMergeHandler
+- ✅ `types/cart.ts` - Added `DBCartItem` interface and CartState methods
+- ✅ `__tests__/lib/actions/cart-merge.test.ts` - Comprehensive test suite (10 tests)
+- ✅ `jest.setup.js` - Added Request/Response polyfills and TextEncoder/TextDecoder
 
 #### Payment Integration (Stripe)
 - **Installation**: `npm install stripe @stripe/stripe-js @stripe/react-stripe-js`

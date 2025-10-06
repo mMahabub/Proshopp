@@ -8,6 +8,25 @@ export interface CartItem {
   stock: number
 }
 
+// Decimal type from Prisma
+import type { Decimal } from '@prisma/client/runtime/library'
+
+export interface DBCartItem {
+  id: string
+  cartId: string
+  productId: string
+  quantity: number
+  price: Decimal
+  product: {
+    id: string
+    name: string
+    slug: string
+    price: Decimal
+    stock: number
+    images: string[]
+  }
+}
+
 export interface CartState {
   items: CartItem[]
   addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void
@@ -16,4 +35,6 @@ export interface CartState {
   clearCart: () => void
   getTotal: () => number
   getItemCount: () => number
+  getCartItemsForSync: () => { productId: string; quantity: number }[]
+  loadCartFromDB: (dbCartItems: DBCartItem[]) => void
 }
