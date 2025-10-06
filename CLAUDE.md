@@ -5727,8 +5727,584 @@ await createOrder(paymentIntentId)
 
 ### Next Implementation Steps
 
-**Remaining checkout tasks:**
-- TASK-309: Create order history page  ← **NEXT**
+**Phase 3 Complete!**
+All checkout and order tasks have been implemented successfully.
+
+---
+
+## TASK-309: Order History Page
+
+### Overview
+
+**TASK-309** implements a comprehensive order history page where users can view all their past orders with filtering, pagination, and detailed order cards. This completes Phase 3 of the e-commerce platform development.
+
+**Key Capabilities:**
+- View all user orders with complete details
+- Filter orders by status (pending, processing, shipped, delivered, cancelled)
+- Pagination for orders (10 per page)
+- Visual order cards with product previews
+- Click-through to order details
+- Empty state handling
+- Responsive design (mobile/desktop)
+- Color-coded status badges
+
+### Implementation Details
+
+#### 1. Dashboard Layout
+
+**File:** `app/(dashboard)/layout.tsx`
+
+Simple dashboard layout with Header and Footer, maintaining consistency with the root layout:
+
+```typescript
+import Header from '@/components/shared/header'
+import Footer from '@/components/footer'
+
+export default function DashboardLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <div className="flex h-screen flex-col">
+      <Header />
+      <main className="flex-1 wrapper">
+        <div className="py-8">{children}</div>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+```
+
+#### 2. Order Card Component
+
+**File:** `components/dashboard/order-card.tsx` (115 lines)
+
+**Features:**
+- Displays order number with status badge
+- Shows order date formatted (e.g., "Jan 5, 2025")
+- Product image previews (first 3 items)
+- "+X more" indicator for additional items
+- Item count display
+- Total price prominently displayed
+- "View Details" button with navigation
+- Clickable card for easy access
+- Color-coded status badges
+
+**Code Example - Status Badge Colors:**
+```typescript
+const statusColors: Record<string, string> = {
+  pending: 'bg-yellow-500',
+  processing: 'bg-blue-500',
+  shipped: 'bg-purple-500',
+  delivered: 'bg-green-500',
+  cancelled: 'bg-red-500',
+}
+```
+
+**Code Example - Product Image Preview:**
+```typescript
+{/* Show first 3 images */}
+{order.items.slice(0, 3).map((item) => (
+  <div key={item.id} className="relative h-12 w-12 rounded-md border overflow-hidden">
+    <Image
+      src={item.image || '/placeholder.png'}
+      alt={item.name}
+      fill
+      className="object-cover"
+    />
+  </div>
+))}
+
+{/* Show count for remaining items */}
+{order.items.length > 3 && (
+  <span className="text-sm text-muted-foreground">
+    +{order.items.length - 3} more
+  </span>
+)}
+```
+
+#### 3. Order List Component
+
+**File:** `components/dashboard/order-list.tsx` (157 lines)
+
+**Features:**
+- Displays heading "My Orders" with count
+- Status filter dropdown with all options
+- Real-time filtering (client-side)
+- Pagination (10 items per page)
+- Empty state for no orders
+- Filtered empty state with reset option
+- Responsive layout
+- Automatic page reset on filter change
+
+**Code Example - Filtering Logic:**
+```typescript
+const [statusFilter, setStatusFilter] = useState('all')
+const [currentPage, setCurrentPage] = useState(1)
+
+// Filter orders by status
+const filteredOrders = useMemo(() => {
+  if (statusFilter === 'all') {
+    return orders
+  }
+  return orders.filter((order) => order.status === statusFilter)
+}, [orders, statusFilter])
+
+// Calculate pagination
+const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE)
+const paginatedOrders = filteredOrders.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+)
+```
+
+**Code Example - Filter Dropdown:**
+```typescript
+<DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button variant="outline" className="gap-2">
+      <Filter className="h-4 w-4" />
+      {currentFilterLabel}
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="end">
+    {statusOptions.map((option) => (
+      <DropdownMenuItem
+        key={option.value}
+        onClick={() => handleFilterChange(option.value)}
+      >
+        {option.label}
+      </DropdownMenuItem>
+    ))}
+  </DropdownMenuContent>
+</DropdownMenu>
+```
+
+#### 4. Orders Page
+
+**File:** `app/(dashboard)/orders/page.tsx` (51 lines)
+
+**Features:**
+- Server Component with authentication check
+- Fetches orders via `getUserOrders()` server action
+- Transforms Decimal prices to numbers
+- Error handling with user-friendly messages
+- Redirect to sign-in if not authenticated
+- Metadata for SEO
+
+**Code Example - Data Fetching & Transformation:**
+```typescript
+export default async function OrdersPage() {
+  // Check authentication
+  const session = await auth()
+  if (!session?.user) {
+    redirect('/sign-in')
+  }
+
+  // Fetch user's orders
+  const result = await getUserOrders()
+
+  if (!result.success || !result.data) {
+    return <ErrorDisplay message={result.message} />
+  }
+
+  // Transform orders data for the component
+  const orders = result.data.map((order) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    status: order.status,
+    createdAt: order.createdAt,
+    totalPrice: parseFloat(order.totalPrice.toString()),
+    items: order.items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      image: item.image,
+      quantity: item.quantity,
+    })),
+  }))
+
+  return <OrderList orders={orders} />
+}
+```
+
+### Test Coverage
+
+**Total: 61 new tests** across 3 test files covering all functionality.
+
+#### 1. OrderCard Component Tests
+**File:** `__tests__/components/dashboard/order-card.test.tsx` (21 tests)
+
+**Test Categories:**
+- **Order Information Display (6 tests)**
+  - Display order number
+  - Display formatted order date
+  - Display order status with capitalization
+  - Display total price
+  - Display item count (singular/plural)
+
+- **Product Images (4 tests)**
+  - Display up to 3 product images
+  - Show "+X more" text when > 3 items
+  - Handle missing images with placeholder
+  - Correct image sources
+
+- **Status Badge Colors (5 tests)**
+  - Pending: yellow
+  - Processing: blue
+  - Shipped: purple
+  - Delivered: green
+  - Cancelled: red
+
+- **Navigation (2 tests)**
+  - Navigate to order details when card clicked
+  - Navigate when "View Details" button clicked
+
+- **Responsive Layout (1 test)**
+  - Render all sections correctly
+
+**Example Test:**
+```typescript
+it('should navigate to order details when "View Details" button is clicked', async () => {
+  const user = userEvent.setup()
+  render(<OrderCard order={mockOrder} />)
+
+  const viewButton = screen.getByRole('button', { name: /view details/i })
+  await user.click(viewButton)
+
+  expect(mockPush).toHaveBeenCalledWith('/orders/order-123')
+})
+```
+
+#### 2. OrderList Component Tests
+**File:** `__tests__/components/dashboard/order-list.test.tsx` (24 tests)
+
+**Test Categories:**
+- **Empty State (1 test)**
+  - Display empty state when no orders
+
+- **Order Display (3 tests)**
+  - Display all orders
+  - Display correct order count
+  - Display singular "order" for single order
+
+- **Status Filtering (7 tests)**
+  - Display filter dropdown with "All Orders" by default
+  - Filter by pending status
+  - Filter by processing status
+  - Filter by delivered status
+  - Show filtered empty state when no matches
+  - Reset to all orders from filtered empty state
+
+- **Pagination (7 tests)**
+  - Show pagination controls when > 10 orders
+  - Disable previous button on first page
+  - Navigate to next page
+  - Disable next button on last page
+  - Navigate to previous page
+  - Reset to page 1 when filter changes
+  - Hide pagination when ≤ 10 orders
+
+**Example Test:**
+```typescript
+it('should filter orders by pending status', async () => {
+  const user = userEvent.setup()
+  render(<OrderList orders={mockOrders} />)
+
+  // Open filter dropdown
+  const filterButton = screen.getByRole('button', { name: /all orders/i })
+  await user.click(filterButton)
+
+  // Click pending filter
+  const pendingOptions = screen.getAllByText('Pending')
+  await user.click(pendingOptions[pendingOptions.length - 1])
+
+  // Should only show pending order
+  expect(screen.getByText('ORD-20250105-001')).toBeInTheDocument()
+  expect(screen.queryByText('ORD-20250104-001')).not.toBeInTheDocument()
+})
+```
+
+#### 3. Orders Page Logic Tests
+**File:** `__tests__/app/(dashboard)/orders/page.test.tsx` (16 tests)
+
+**Test Categories:**
+- **Authentication (2 tests)**
+  - Redirect to sign-in when not authenticated
+  - No redirect when authenticated
+
+- **Order Fetching (3 tests)**
+  - Call getUserOrders for authenticated user
+  - Handle successful order fetch
+  - Handle failed order fetch
+
+- **Data Transformation (3 tests)**
+  - Transform Decimal totalPrice to number
+  - Transform all orders correctly
+  - Preserve order properties during transformation
+
+- **Order Data Structure (3 tests)**
+  - Correct order structure
+  - Correct order item structure
+  - Handle multiple items in order
+
+- **Empty Orders (1 test)**
+  - Handle empty orders array
+
+- **Error Handling (2 tests)**
+  - Handle null data in response
+  - Handle undefined data in response
+
+**Example Test:**
+```typescript
+it('should transform Decimal totalPrice to number', () => {
+  const order = mockOrdersResponse.data[0]
+  const transformedPrice = parseFloat(order.totalPrice.toString())
+
+  expect(transformedPrice).toBe(120.96)
+})
+```
+
+### Usage Examples
+
+#### Accessing Order History
+
+```typescript
+// User navigates to /orders (or /dashboard/orders)
+// Page automatically:
+// 1. Checks authentication (redirects to /sign-in if not authenticated)
+// 2. Fetches user's orders from database
+// 3. Transforms data and renders OrderList component
+```
+
+#### Filtering Orders
+
+```typescript
+// User clicks filter dropdown
+// Selects "Delivered"
+// List automatically:
+// 1. Filters to show only delivered orders
+// 2. Updates order count
+// 3. Resets pagination to page 1
+// 4. Shows filtered empty state if no results
+```
+
+#### Pagination
+
+```typescript
+// User has 15 orders
+// Page automatically:
+// 1. Shows first 10 orders
+// 2. Displays "Page 1 of 2"
+// 3. Enables "Next" button, disables "Previous"
+// User clicks "Next"
+// 4. Shows orders 11-15
+// 5. Displays "Page 2 of 2"
+// 6. Enables "Previous" button, disables "Next"
+```
+
+#### View Order Details
+
+```typescript
+// User clicks order card or "View Details" button
+// Router navigates to /orders/{orderId}
+// (Order details page - to be implemented in future task)
+```
+
+### Key Features
+
+#### 1. Status-Based Filtering
+- **6 filter options:** All Orders, Pending, Processing, Shipped, Delivered, Cancelled
+- Client-side filtering for instant response
+- Visual feedback with current filter in button text
+- Automatic count update based on filter
+- Reset option from filtered empty state
+
+#### 2. Pagination System
+- **10 orders per page** for optimal performance
+- Previous/Next navigation buttons
+- Current page indicator (e.g., "Page 1 of 2")
+- Disabled states for first/last pages
+- Automatic reset to page 1 when filter changes
+- Hidden when ≤ 10 orders
+
+#### 3. Visual Order Cards
+- **Order Information:** Number, date, status
+- **Product Previews:** First 3 product images
+- **Item Summary:** Total count with "+X more" indicator
+- **Price Display:** Total price prominently shown
+- **Status Badges:** Color-coded for quick identification
+- **Click-to-View:** Entire card is clickable
+- **Action Button:** "View Details" with icon
+
+#### 4. Empty State Handling
+- **No Orders:** Friendly message with "Start Shopping" button
+- **Filtered No Results:** Message with filter name and "View all orders" option
+- Clear visual separation from normal content
+
+#### 5. Responsive Design
+- **Mobile:** Single column layout, stacked information
+- **Desktop:** Row layout with side-by-side information
+- Flexible image grid
+- Responsive button layouts
+
+### Error Handling
+
+#### Authentication Errors
+```typescript
+// No session → redirect to /sign-in
+const session = await auth()
+if (!session?.user) {
+  redirect('/sign-in')
+}
+```
+
+#### Data Fetching Errors
+```typescript
+// Failed fetch → show error message
+if (!result.success || !result.data) {
+  return (
+    <div className="text-center py-12">
+      <h3>Failed to load orders</h3>
+      <p>{result.message}</p>
+    </div>
+  )
+}
+```
+
+#### Empty States
+```typescript
+// No orders → show empty state with call-to-action
+if (orders.length === 0) {
+  return (
+    <div className="text-center py-12">
+      <h3>No orders yet</h3>
+      <p>When you place an order, it will appear here.</p>
+      <Button onClick={() => (window.location.href = '/')}>
+        Start Shopping
+      </Button>
+    </div>
+  )
+}
+```
+
+#### Filtered Empty State
+```typescript
+// No results for filter → show reset option
+if (filteredOrders.length === 0) {
+  return (
+    <div className="text-center py-12 border rounded-lg">
+      <p>No {currentFilterLabel.toLowerCase()} found.</p>
+      <Button variant="link" onClick={() => handleFilterChange('all')}>
+        View all orders
+      </Button>
+    </div>
+  )
+}
+```
+
+### Integration Points
+
+#### With Order Actions (TASK-306)
+```typescript
+// Uses getUserOrders() to fetch orders
+const result = await getUserOrders()
+
+// Returns orders with:
+// - Basic order info (id, orderNumber, status, dates, prices)
+// - Order items with product details
+// - Sorted by createdAt (most recent first)
+```
+
+#### With Order Confirmation (TASK-308)
+```typescript
+// After order is created and confirmed
+// User can click "View Order" button
+// → navigates to /orders/{orderId}
+
+// Or navigate to order history
+// → /orders shows all orders including new one
+```
+
+### Technical Decisions
+
+#### 1. Client-Side Filtering
+**Decision:** Implement filtering on client-side
+**Rationale:**
+- All user orders already fetched
+- Instant filter response (no network delay)
+- Reduced server load
+- Simple state management with useMemo
+
+#### 2. Pagination Strategy
+**Decision:** Client-side pagination with 10 items per page
+**Rationale:**
+- Most users have < 100 orders
+- Fetch all orders once, paginate in client
+- Better UX with instant page navigation
+- Reduced server requests
+
+#### 3. Status Badge Colors
+**Decision:** Use distinct colors for each status
+**Rationale:**
+- Yellow (pending) - Warning/waiting
+- Blue (processing) - In progress
+- Purple (shipped) - In transit
+- Green (delivered) - Success/complete
+- Red (cancelled) - Error/stopped
+
+#### 4. Product Preview Limit
+**Decision:** Show first 3 product images with "+X more"
+**Rationale:**
+- Visual preview without clutter
+- Maintains card size consistency
+- Clear indicator for additional items
+- Better mobile experience
+
+#### 5. Decimal to Number Conversion
+**Decision:** Convert Prisma Decimal to number for React components
+**Rationale:**
+- React components expect primitive numbers
+- Decimal objects cause serialization issues
+- Precision maintained with parseFloat
+- Consistent with other pages
+
+### Verification Results
+
+**All checks passed:**
+- ✅ **TypeScript:** No errors (fixed searchParams typing in TASK-308 test)
+- ✅ **ESLint:** No warnings or errors
+- ✅ **Tests:** 471 passing, 4 skipped (30 test suites)
+- ✅ **Build:** Production build successful (15 routes including new `/orders`)
+
+**Build Output:**
+```
+Route (app)                              Size     First Load JS
+...
+├ ƒ /orders                              3.59 kB         148 kB  ← NEW
+...
+```
+
+### Next Steps
+
+**Phase 3 is now complete!** ✅
+
+All checkout and order functionality has been implemented:
+- ✅ TASK-304: Payment page with Stripe Elements
+- ✅ TASK-305: Payment intent creation
+- ✅ TASK-306: Order server actions
+- ✅ TASK-307: Stripe webhook handler with order confirmation emails
+- ✅ TASK-308: Order confirmation page
+- ✅ TASK-309: Order history page
+
+**Next phase:**
+- Phase 4: Admin Panel (TASK-401 onwards)
+  - Admin layout and navigation
+  - Admin dashboard with metrics
+  - Product management
+  - Order management
+  - User management
 
 ---
 

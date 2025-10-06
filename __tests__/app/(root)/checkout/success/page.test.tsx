@@ -153,7 +153,7 @@ describe('Checkout Success Page Logic', () => {
 
   describe('Redirect Scenarios', () => {
     it('should trigger redirect when payment intent client secret is missing', () => {
-      const searchParams = {}
+      const searchParams: { payment_intent_client_secret?: string } = {}
 
       expect(() => {
         if (!searchParams.payment_intent_client_secret) {
