@@ -352,3 +352,146 @@ export async function sendPasswordResetEmail(
     throw new Error('Failed to send password reset email')
   }
 }
+
+// ========================================
+// Order Confirmation Functions
+// ========================================
+
+interface OrderConfirmationData {
+  orderNumber: string
+  customerName: string
+  customerEmail: string
+  items: Array<{
+    name: string
+    quantity: number
+    price: number
+  }>
+  subtotal: number
+  tax: number
+  total: number
+  shippingAddress: {
+    fullName: string
+    streetAddress: string
+    city: string
+    state: string
+    postalCode: string
+    country: string
+  }
+}
+
+/**
+ * Send order confirmation email
+ * @param data - Order confirmation data
+ */
+export async function sendOrderConfirmationEmail(
+  data: OrderConfirmationData
+): Promise<void> {
+  const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+  const orderUrl = `${baseUrl}/orders`
+
+  try {
+    await resend.emails.send({
+      from: `${APP_NAME} <onboarding@resend.dev>`,
+      to: data.customerEmail,
+      subject: `Order Confirmation - ${data.orderNumber}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Order Confirmation</title>
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 28px;">Order Confirmed!</h1>
+              <p style="color: white; margin: 10px 0 0 0; font-size: 16px;">Thank you for your purchase</p>
+            </div>
+
+            <div style="background: #ffffff; padding: 40px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 10px 10px;">
+              <p style="font-size: 16px; margin-bottom: 20px;">Hi ${data.customerName},</p>
+
+              <p style="font-size: 16px; margin-bottom: 20px;">
+                We've received your order and it's being processed. Here are your order details:
+              </p>
+
+              <div style="background: #f5f5f5; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <p style="font-size: 14px; color: #666; margin: 0;">Order Number</p>
+                <p style="font-size: 20px; font-weight: 600; margin: 5px 0 0 0; color: #667eea;">${data.orderNumber}</p>
+              </div>
+
+              <h2 style="font-size: 18px; margin: 30px 0 15px 0; border-bottom: 2px solid #667eea; padding-bottom: 10px;">Order Items</h2>
+
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                  <tr style="border-bottom: 1px solid #e0e0e0;">
+                    <th style="text-align: left; padding: 10px; font-size: 14px; color: #666;">Item</th>
+                    <th style="text-align: center; padding: 10px; font-size: 14px; color: #666;">Qty</th>
+                    <th style="text-align: right; padding: 10px; font-size: 14px; color: #666;">Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.items.map(item => `
+                    <tr style="border-bottom: 1px solid #f0f0f0;">
+                      <td style="padding: 12px 10px; font-size: 14px;">${item.name}</td>
+                      <td style="padding: 12px 10px; font-size: 14px; text-align: center;">${item.quantity}</td>
+                      <td style="padding: 12px 10px; font-size: 14px; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+
+              <div style="background: #f5f5f5; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="font-size: 14px;">Subtotal</span>
+                  <span style="font-size: 14px;">$${data.subtotal.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <span style="font-size: 14px;">Tax</span>
+                  <span style="font-size: 14px;">$${data.tax.toFixed(2)}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;">
+                  <span style="font-size: 16px; font-weight: 600;">Total</span>
+                  <span style="font-size: 16px; font-weight: 600; color: #667eea;">$${data.total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <h2 style="font-size: 18px; margin: 30px 0 15px 0; border-bottom: 2px solid #667eea; padding-bottom: 10px;">Shipping Address</h2>
+              <div style="background: #f5f5f5; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                <p style="margin: 0; font-size: 14px; line-height: 1.6;">
+                  ${data.shippingAddress.fullName}<br>
+                  ${data.shippingAddress.streetAddress}<br>
+                  ${data.shippingAddress.city}, ${data.shippingAddress.state} ${data.shippingAddress.postalCode}<br>
+                  ${data.shippingAddress.country}
+                </p>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${orderUrl}"
+                   style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; display: inline-block;">
+                  View Order Details
+                </a>
+              </div>
+
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                <p style="font-size: 13px; color: #999; margin: 0;">
+                  We'll send you a shipping confirmation email as soon as your order ships.
+                </p>
+                <p style="font-size: 13px; color: #999; margin: 10px 0 0 0;">
+                  If you have any questions, please don't hesitate to contact us.
+                </p>
+              </div>
+            </div>
+
+            <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+              <p style="margin: 0;">© ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.</p>
+            </div>
+          </body>
+        </html>
+      `,
+    })
+  } catch (error) {
+    console.error('Error sending order confirmation email:', error)
+    throw new Error('Failed to send order confirmation email')
+  }
+}

@@ -24,6 +24,20 @@ if (typeof global.Response === 'undefined') {
       this.status = init?.status || 200
       this.headers = new Map(Object.entries(init?.headers || {}))
     }
+
+    static json(data, init) {
+      return new Response(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...init?.headers,
+        },
+      })
+    }
+
+    async json() {
+      return JSON.parse(this.body)
+    }
   }
 }
 
@@ -35,3 +49,4 @@ if (typeof global.Headers === 'undefined') {
 process.env.STRIPE_SECRET_KEY = 'sk_test_mock_secret_key_for_testing'
 process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY =
   'pk_test_mock_publishable_key_for_testing'
+process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_mock_webhook_secret_for_testing'
