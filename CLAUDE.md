@@ -203,6 +203,7 @@ The project is in early development stage. Core documentation exists to guide de
 - ✅ TASK-207: Cart merge on login (guest cart → database cart)
 - ✅ TASK-301: Order database models (Order and OrderItem)
 - ✅ TASK-302: Stripe installation and configuration
+- ✅ TASK-303: Checkout address page (Step 1 of checkout flow)
 
 ### 🔴 TEST-FIRST DEVELOPMENT (MANDATORY)
 **All code must have tests. No exceptions.**
@@ -3461,6 +3462,260 @@ For production deployment:
 2. Generate new webhook secret for production
 3. Add production webhook secret to production environment variables
 4. Remove ngrok dependency
+
+---
+
+### Checkout Flow (TASK-303) - ✅ IMPLEMENTED
+
+#### Overview
+Multi-step checkout process with shipping address collection, progress tracking, and cookie-based state management.
+
+**Files Created:**
+- `app/(root)/checkout/page.tsx` - Checkout address page (Step 1)
+- `app/(root)/checkout/layout.tsx` - Checkout layout with metadata
+- `components/checkout/address-form.tsx` - Shipping address form component
+- `components/checkout/checkout-steps.tsx` - Progress indicator component
+- `lib/validations/checkout.ts` - Address validation schema
+- `lib/actions/checkout.actions.ts` - Checkout server actions
+
+**Tests Created:**
+- `__tests__/lib/validations/checkout.test.ts` - 48 validation tests
+- `__tests__/components/checkout/address-form.test.tsx` - 23 component tests
+- `__tests__/app/checkout/checkout-page.test.tsx` - 5 page tests
+
+#### Address Validation Schema
+
+```typescript
+// lib/validations/checkout.ts
+import { z } from 'zod'
+
+export const shippingAddressSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, 'Full name must be at least 2 characters')
+    .max(100, 'Full name must be less than 100 characters'),
+  streetAddress: z
+    .string()
+    .min(5, 'Street address must be at least 5 characters')
+    .max(200, 'Street address must be less than 200 characters'),
+  city: z
+    .string()
+    .min(2, 'City must be at least 2 characters')
+    .max(100, 'City must be less than 100 characters'),
+  state: z
+    .string()
+    .min(2, 'State must be at least 2 characters')
+    .max(100, 'State must be less than 100 characters'),
+  postalCode: z
+    .string()
+    .min(3, 'Postal code must be at least 3 characters')
+    .max(20, 'Postal code must be less than 20 characters')
+    .regex(/^[A-Za-z0-9\s\-]+$/, 'Invalid postal code format'),
+  country: z
+    .string()
+    .min(2, 'Country must be at least 2 characters')
+    .max(100, 'Country must be less than 100 characters'),
+})
+
+export type ShippingAddressInput = z.infer<typeof shippingAddressSchema>
+```
+
+#### Address Form Component
+
+**Features:**
+- Six form fields: Full Name, Street Address, City, State/Province, Postal Code, Country
+- Server action integration with `useActionState` hook
+- Loading state with pending button text
+- Responsive grid layout for city/state and postal/country
+- Default values support for pre-filling
+- Error and success message display
+- Accessibility: proper labels, required attributes, keyboard navigation
+
+**Usage:**
+```typescript
+import AddressForm from '@/components/checkout/address-form'
+
+// With default values
+<AddressForm
+  defaultValues={{
+    fullName: 'John Doe',
+    streetAddress: '123 Main St',
+    city: 'New York',
+    state: 'NY',
+    postalCode: '10001',
+    country: 'United States',
+  }}
+/>
+
+// Empty form
+<AddressForm />
+```
+
+#### Checkout Steps Component
+
+**Features:**
+- Visual progress indicator with 3 steps: Address → Payment → Review
+- Shows current step with primary color
+- Completed steps marked with checkmark icon
+- Future steps shown in muted color
+- Connector lines between steps
+- Responsive design (mobile/desktop layouts)
+
+**Usage:**
+```typescript
+import CheckoutSteps from '@/components/checkout/checkout-steps'
+
+<CheckoutSteps currentStep={1} /> // Address step
+<CheckoutSteps currentStep={2} /> // Payment step
+<CheckoutSteps currentStep={3} /> // Review step
+```
+
+#### Server Actions
+
+**`saveShippingAddress`**:
+- Validates address data using Zod schema
+- Stores address in HTTP-only cookie (24-hour expiry)
+- Redirects to `/checkout/payment` on success
+- Returns error message on validation failure
+
+**`getShippingAddress`**:
+- Retrieves stored address from cookie
+- Validates and returns parsed address
+- Returns `null` if no address found or invalid
+
+```typescript
+// lib/actions/checkout.actions.ts
+'use server'
+
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { shippingAddressSchema } from '@/lib/validations/checkout'
+
+export async function saveShippingAddress(prevState: unknown, formData: FormData) {
+  try {
+    const data = {
+      fullName: formData.get('fullName') as string,
+      streetAddress: formData.get('streetAddress') as string,
+      city: formData.get('city') as string,
+      state: formData.get('state') as string,
+      postalCode: formData.get('postalCode') as string,
+      country: formData.get('country') as string,
+    }
+
+    const validatedData = shippingAddressSchema.parse(data)
+
+    const cookieStore = await cookies()
+    cookieStore.set('shipping_address', JSON.stringify(validatedData), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 24 hours
+    })
+
+    redirect('/checkout/payment')
+  } catch (error) {
+    // Error handling
+  }
+}
+```
+
+#### Checkout Page Structure
+
+```typescript
+// app/(root)/checkout/page.tsx
+import CheckoutSteps from '@/components/checkout/checkout-steps'
+import AddressForm from '@/components/checkout/address-form'
+
+export default function CheckoutPage() {
+  return (
+    <div className="space-y-8">
+      {/* Progress Steps */}
+      <CheckoutSteps currentStep={1} />
+
+      {/* Address Form */}
+      <div className="mx-auto max-w-2xl">
+        <AddressForm />
+      </div>
+    </div>
+  )
+}
+```
+
+#### Checkout Layout
+
+```typescript
+// app/(root)/checkout/layout.tsx
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Checkout - Proshopp',
+  description: 'Complete your purchase securely',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
+
+export default function CheckoutLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="container max-w-4xl mx-auto py-8 px-4 md:px-6">
+      {children}
+    </div>
+  )
+}
+```
+
+#### Testing Summary
+
+**Validation Tests (48 tests):**
+- Full name validation (min/max length, edge cases)
+- Street address validation (apartments/units, length)
+- City validation (min/max, international names)
+- State validation (abbreviations, full names)
+- Postal code validation (US ZIP, ZIP+4, UK, Canadian formats)
+- Country validation (abbreviations, full names)
+- International address support (German, Japanese, Australian)
+- Edge cases (null, undefined, partial data, whitespace)
+
+**Component Tests (23 tests):**
+- Form fields rendering
+- Required attributes
+- Input types and names
+- Placeholder text
+- Labels and headers
+- Submit button states
+- Default values population
+- Grid layout structure
+- Accessibility (label associations, keyboard navigation)
+
+**Page Tests (5 tests):**
+- Checkout steps rendering
+- Address form rendering
+- Current step indicator
+- Layout structure
+- Max-width container
+
+#### Middleware Protection
+
+Checkout routes require authentication (already configured in `middleware.ts`):
+
+```typescript
+const isCheckoutRoute = nextUrl.pathname.startsWith('/checkout')
+
+if (isCheckoutRoute && !isLoggedIn) {
+  return NextResponse.redirect(new URL('/sign-in', request.url))
+}
+```
+
+#### Next Steps
+
+**Upcoming checkout tasks:**
+- TASK-304: Create payment page with Stripe Elements
+- TASK-305: Create order review page
+- TASK-306: Create order server actions
+- TASK-307: Create Stripe webhook handler
+- TASK-308: Create order confirmation page
+- TASK-309: Create order history page
 
 ---
 
