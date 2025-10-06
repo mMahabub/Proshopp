@@ -19,3 +19,11 @@ export function formatNumberWithDecimal(num: number): string {
   const [int, decimal] = num.toString().split('.');
   return decimal ? `${int}.${decimal.substring(0, 2).padEnd(2, '0')}` : `${int}.00`;
 }
+
+// Format currency with USD formatting
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount)
+}
