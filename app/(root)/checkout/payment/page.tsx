@@ -41,7 +41,7 @@ export default async function PaymentPage() {
   return (
     <div className="space-y-8">
       {/* Progress Steps */}
-      <CheckoutSteps currentStep={2} />
+      <CheckoutSteps currentStep={3} />
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Order Summary - Left Column */}

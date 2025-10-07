@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils'
 
 const steps = [
   { id: 1, name: 'Address', href: '/checkout' },
-  { id: 2, name: 'Payment', href: '/checkout/payment' },
-  { id: 3, name: 'Review', href: '/checkout/review' },
+  { id: 2, name: 'Review', href: '/checkout/review' },
+  { id: 3, name: 'Payment', href: '/checkout/payment' },
 ]
 
 interface CheckoutStepsProps {

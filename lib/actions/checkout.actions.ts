@@ -46,8 +46,8 @@ export async function saveShippingAddress(
       }
     )
 
-    // Redirect to payment page
-    redirect('/checkout/payment')
+    // Redirect to review page
+    redirect('/checkout/review')
   } catch (error) {
     if (isRedirectError(error)) {
       throw error

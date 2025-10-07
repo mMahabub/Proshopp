@@ -112,14 +112,14 @@ describe('PaymentPage', () => {
   }
 
   describe('Rendering', () => {
-    it('should render checkout steps with step 2', async () => {
+    it('should render checkout steps with step 3', async () => {
       mockGetShippingAddress.mockResolvedValue(mockShippingAddress)
       mockGetPaymentDetails.mockResolvedValue(mockPaymentDetails as any)
       mockCreatePaymentIntent.mockResolvedValue(mockPaymentIntent as any)
 
       render(await PaymentPage())
 
-      expect(screen.getByTestId('checkout-steps')).toHaveTextContent('Step 2')
+      expect(screen.getByTestId('checkout-steps')).toHaveTextContent('Step 3')
     })
 
     it('should render order summary title', async () => {

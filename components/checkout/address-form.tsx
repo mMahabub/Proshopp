@@ -10,7 +10,7 @@ function SubmitButton() {
 
   return (
     <Button type="submit" disabled={pending} className="w-full">
-      {pending ? 'Saving...' : 'Continue to Payment'}
+      {pending ? 'Saving...' : 'Continue to Review'}
     </Button>
   )
 }

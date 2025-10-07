@@ -91,7 +91,7 @@ describe('AddressForm', () => {
     it('should render submit button', () => {
       render(<AddressForm />)
 
-      const submitButton = screen.getByRole('button', { name: /continue to payment/i })
+      const submitButton = screen.getByRole('button', { name: /continue to review/i })
       expect(submitButton).toBeInTheDocument()
       expect(submitButton).toHaveAttribute('type', 'submit')
     })
@@ -99,7 +99,7 @@ describe('AddressForm', () => {
     it('should have submit button enabled by default', () => {
       render(<AddressForm />)
 
-      const submitButton = screen.getByRole('button', { name: /continue to payment/i })
+      const submitButton = screen.getByRole('button', { name: /continue to review/i })
       expect(submitButton).not.toBeDisabled()
     })
   })
