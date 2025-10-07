@@ -7,23 +7,31 @@ import Menu from "./menu";
 
 const Header = () => {
     return (
-         <header className="w-full border-b border-border/40 bg-gradient-to-r from-background via-background to-muted/30 backdrop-blur-sm sticky top-0 z-50 shadow-soft">
-        <div className="wrapper flex-between py-4">
+         <header className="w-full border-b border-border/40 bg-gradient-to-r from-background via-muted/20 to-background backdrop-blur-md sticky top-0 z-50 shadow-medium">
+        {/* Decorative gradient line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
+        <div className="wrapper flex-between py-5">
             <div className="flex-start">
                 <Link href='/' className="flex-start gap-3 group">
                 <div className="relative">
+                  {/* Glow effect on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300 rounded-full" />
                   <Image
                     src='/images/logo.svg'
                     alt={`${APP_NAME} logo `}
                     height={48}
                     width={48}
                     priority={true}
-                    className="transition-transform duration-300 group-hover:scale-110"
+                    className="relative transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
                   />
                 </div>
-                <span className="hidden lg:block font-bold text-2xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                  {APP_NAME}
-                </span>
+                <div className="hidden lg:block">
+                  <span className="font-bold text-2xl bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                    {APP_NAME}
+                  </span>
+                  <div className="h-0.5 w-0 group-hover:w-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 rounded-full" />
+                </div>
                 </Link>
             </div>
             <Menu/>
