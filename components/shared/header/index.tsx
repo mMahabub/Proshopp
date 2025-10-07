@@ -7,11 +7,14 @@ import Menu from "./menu";
 
 const Header = () => {
     return (
-         <header className="w-full border-b border-border/40 bg-gradient-to-r from-background via-muted/20 to-background backdrop-blur-md sticky top-0 z-50 shadow-medium">
-        {/* Decorative gradient line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+         <header className="w-full border-b-2 border-primary/10 bg-white dark:bg-card backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_20px_rgba(99,102,241,0.08)]">
+        {/* Decorative gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-secondary/3 to-accent/3 pointer-events-none" />
 
-        <div className="wrapper flex-between py-5">
+        {/* Decorative gradient line */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent" />
+
+        <div className="wrapper flex-between py-5 relative z-10">
             <div className="flex-start">
                 <Link href='/' className="flex-start gap-3 group">
                 <div className="relative">

@@ -8253,3 +8253,205 @@ npm run build
 9. Product search in header
 10. Category mega-menu
 
+
+---
+
+## Header and Footer Background Color Redesign (January 2025)
+
+### Overview
+Complete redesign of header and footer background colors to create a cleaner, more professional appearance with sophisticated gradient overlays and accent borders.
+
+### Changes Summary
+
+**Files Modified:**
+- `components/shared/header/index.tsx` - New white/card background with gradient accents
+- `components/footer.tsx` - Enhanced gradient background with professional color scheme
+
+### Header Background Redesign (`components/shared/header/index.tsx`)
+
+**Previous Design:**
+- Background: `bg-gradient-to-r from-background via-muted/20 to-background`
+- Border: `border-b border-border/40`
+- Shadow: `shadow-medium`
+- Backdrop: `backdrop-blur-md`
+
+**New Design:**
+- **Background**: `bg-white dark:bg-card` - Clean white base with dark mode support
+- **Backdrop Blur**: `backdrop-blur-lg` - Stronger blur effect for depth
+- **Border**: `border-b-2 border-primary/10` - Thicker border with primary color tint
+- **Shadow**: `shadow-[0_2px_20px_rgba(99,102,241,0.08)]` - Custom shadow with primary color (indigo) tint
+- **Gradient Overlay**: Subtle 3% opacity gradient using primary/secondary/accent colors
+- **Bottom Accent**: 0.5px gradient line from primary → secondary → accent
+
+**Design Features:**
+```tsx
+{/* Decorative gradient overlay */}
+<div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-secondary/3 to-accent/3 pointer-events-none" />
+
+{/* Decorative gradient line */}
+<div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent" />
+```
+
+**Key Improvements:**
+1. **Cleaner Background**: White background provides better contrast and readability
+2. **Subtle Brand Colors**: Very light gradient overlay (3% opacity) adds brand identity without overwhelming
+3. **Enhanced Depth**: Stronger backdrop blur creates better separation from content
+4. **Visual Interest**: Gradient accent line at bottom adds polish
+5. **Dark Mode Ready**: Switches to card background in dark mode
+6. **Professional Shadow**: Custom shadow with indigo tint (rgba(99,102,241,0.08)) matches primary color
+
+### Footer Background Redesign (`components/footer.tsx`)
+
+**Previous Design:**
+- Background: `bg-gradient-to-b from-background via-muted/10 to-muted/30`
+- Border: `border-t border-border/40`
+- Top Line: `h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent`
+
+**New Design:**
+- **Light Mode Background**: 
+  - `bg-gradient-to-br from-slate-50 via-white to-blue-50/30`
+  - Diagonal gradient from slate → white → light blue
+  - Creates depth with subtle color transitions
+  
+- **Dark Mode Background**: 
+  - `dark:from-card dark:via-card dark:to-card/50`
+  - Consistent card background with slight transparency at end
+
+- **Border**: `border-t-2 border-primary/10` - Thicker border with primary color tint
+- **Gradient Overlay**: 5% opacity diagonal gradient using brand colors
+- **Top Accent**: 0.5px gradient line from primary → secondary → accent
+
+**Design Features:**
+```tsx
+{/* Decorative gradient overlay */}
+<div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 pointer-events-none" />
+
+<div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent" />
+```
+
+**Key Improvements:**
+1. **Professional Gradient**: Diagonal gradient (bottom-right) creates visual interest
+2. **Subtle Color Variation**: Slate → white → light blue provides depth without distraction
+3. **Brand Integration**: 5% opacity brand color overlay reinforces identity
+4. **Enhanced Border**: Thicker border with primary tint creates better separation
+5. **Vibrant Accent Line**: Full-opacity gradient line at top mirrors header design
+6. **Dark Mode Optimized**: Uses consistent card background with subtle transparency
+
+### Color Palette Integration
+
+**Primary Color (Indigo Blue - 239 84% 67%)**
+- Used in: Borders (10% opacity), shadow tint, gradient overlays
+- Creates cohesive brand feel throughout header and footer
+
+**Secondary Color (Purple - 262 83% 58%)**
+- Used in: Gradient overlays and accent lines
+- Adds variety to color transitions
+
+**Accent Color (Teal - 173 80% 40%)**
+- Used in: Gradient overlays and accent lines
+- Completes the 3-color gradient system
+
+### Technical Implementation
+
+**Opacity Levels:**
+- Header Overlay: 3% (very subtle, doesn't interfere with content)
+- Footer Overlay: 5% (slightly more visible to differentiate from header)
+- Border Tint: 10% (provides subtle color without being too bold)
+- Accent Lines: 100% (full color for visual pop)
+
+**Gradient Directions:**
+- Header Overlay: Left to right (`bg-gradient-to-r`)
+- Footer Overlay: Bottom-right diagonal (`bg-gradient-to-br`)
+- Accent Lines: Left to right through all three colors
+- Footer Background: Bottom-right diagonal with color stops
+
+**Backdrop Effects:**
+- Header: `backdrop-blur-lg` - Strong blur for better content separation
+- Both: Layered approach with base color + overlay + accent line
+
+**Pointer Events:**
+- All overlay divs use `pointer-events-none` to prevent interaction blocking
+- Ensures clickable elements remain functional
+
+### Verification
+
+**TypeScript:** ✅ No errors
+```bash
+npx tsc --noEmit
+```
+
+**ESLint:** ✅ No warnings
+```bash
+npm run lint
+# ✔ No ESLint warnings or errors
+```
+
+**Tests:** ✅ 540 passing (same as before changes)
+```bash
+npm test
+# Test Suites: 1 failed (pre-existing), 36 passed, 37 total
+# Tests: 4 skipped, 540 passed, 544 total
+```
+
+**Build:** ✅ Production build successful
+```bash
+npm run build
+# ✓ Compiled successfully
+# ✓ Generating static pages (17/17)
+```
+
+### Visual Comparison
+
+**Before:**
+- Header: Gradient background with muted tones, moderate blur
+- Footer: Simple gradient background, single pixel border
+- Limited use of brand colors in backgrounds
+
+**After:**
+- Header: Clean white with subtle brand tint, vibrant accent line, custom shadow
+- Footer: Professional gradient with color variation, vibrant accent line
+- Consistent brand color integration throughout
+- Better visual hierarchy and separation
+
+### User Experience Improvements
+
+1. **Improved Readability**: White header background provides better contrast for text and navigation
+2. **Professional Appearance**: Cleaner backgrounds create more polished, enterprise-ready look
+3. **Brand Consistency**: Subtle color overlays reinforce brand identity without overwhelming
+4. **Visual Hierarchy**: Accent lines clearly separate header/footer from main content
+5. **Dark Mode Support**: Both components adapt gracefully to dark mode
+6. **Depth Perception**: Layered approach with blur and overlays creates dimensional feel
+
+### Design Principles Applied
+
+1. **Less is More**: Reduced opacity on overlays (3-5%) keeps focus on content
+2. **Layered Design**: Multiple layers (base + overlay + accent) create depth
+3. **Color Psychology**: White/light backgrounds convey cleanliness and professionalism
+4. **Consistency**: Same gradient system used in both header and footer
+5. **Accessibility**: High contrast maintained for text readability
+6. **Progressive Enhancement**: Works beautifully in both light and dark modes
+
+### Browser Compatibility
+
+- ✅ All modern browsers support gradient backgrounds
+- ✅ `backdrop-blur-lg` supported in Chrome, Firefox, Safari, Edge
+- ✅ Fallback to solid background if backdrop-filter not supported
+- ✅ Custom shadow with RGBA supported universally
+- ✅ Dark mode via Tailwind's dark: prefix works across all browsers
+
+### Performance Impact
+
+- **Zero Performance Impact**: Pure CSS solution with no JavaScript
+- **Optimized Rendering**: Static gradients render efficiently
+- **No Additional Requests**: All styles are inline via Tailwind classes
+- **Minimal CSS Output**: Tailwind purges unused gradient combinations
+
+### Future Enhancement Opportunities
+
+1. Animated gradient transitions on hover
+2. Glassmorphism effects for header (frosted glass appearance)
+3. Parallax scrolling effects on accent lines
+4. Seasonal theme variations (different gradients for holidays)
+5. User preference for gradient intensity
+6. Micro-animations on scroll (accent line grows/shrinks)
+
