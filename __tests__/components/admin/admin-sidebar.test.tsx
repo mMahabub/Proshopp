@@ -74,7 +74,7 @@ describe('AdminSidebar', () => {
       render(<AdminSidebar />)
 
       const dashboardLink = screen.getByRole('link', { name: /dashboard/i })
-      expect(dashboardLink).toHaveClass('bg-gray-800', 'text-white')
+      expect(dashboardLink).toHaveClass('text-primary', 'border-primary')
     })
 
     it('should highlight active products link when on /admin/products', () => {
@@ -82,7 +82,7 @@ describe('AdminSidebar', () => {
       render(<AdminSidebar />)
 
       const productsLink = screen.getByRole('link', { name: /products/i })
-      expect(productsLink).toHaveClass('bg-gray-800', 'text-white')
+      expect(productsLink).toHaveClass('text-primary', 'border-primary')
     })
 
     it('should highlight active products link when on /admin/products/123', () => {
@@ -90,7 +90,7 @@ describe('AdminSidebar', () => {
       render(<AdminSidebar />)
 
       const productsLink = screen.getByRole('link', { name: /products/i })
-      expect(productsLink).toHaveClass('bg-gray-800', 'text-white')
+      expect(productsLink).toHaveClass('text-primary', 'border-primary')
     })
 
     it('should highlight active orders link when on /admin/orders', () => {
@@ -98,7 +98,7 @@ describe('AdminSidebar', () => {
       render(<AdminSidebar />)
 
       const ordersLink = screen.getByRole('link', { name: /orders/i })
-      expect(ordersLink).toHaveClass('bg-gray-800', 'text-white')
+      expect(ordersLink).toHaveClass('text-primary', 'border-primary')
     })
 
     it('should highlight active users link when on /admin/users', () => {
@@ -106,7 +106,7 @@ describe('AdminSidebar', () => {
       render(<AdminSidebar />)
 
       const usersLink = screen.getByRole('link', { name: /users/i })
-      expect(usersLink).toHaveClass('bg-gray-800', 'text-white')
+      expect(usersLink).toHaveClass('text-primary', 'border-primary')
     })
 
     it('should not highlight dashboard when on other admin routes', () => {
@@ -114,8 +114,8 @@ describe('AdminSidebar', () => {
       render(<AdminSidebar />)
 
       const dashboardLink = screen.getByRole('link', { name: /dashboard/i })
-      expect(dashboardLink).not.toHaveClass('bg-gray-800')
-      expect(dashboardLink).toHaveClass('text-gray-400')
+      expect(dashboardLink).not.toHaveClass('text-primary')
+      expect(dashboardLink).toHaveClass('text-muted-foreground')
     })
 
     it('should apply hover styles to non-active links', () => {
@@ -123,7 +123,7 @@ describe('AdminSidebar', () => {
       render(<AdminSidebar />)
 
       const productsLink = screen.getByRole('link', { name: /products/i })
-      expect(productsLink).toHaveClass('hover:text-white', 'hover:bg-gray-800')
+      expect(productsLink).toHaveClass('hover:text-foreground', 'hover:bg-muted/50')
     })
   })
 
@@ -155,11 +155,11 @@ describe('AdminSidebar', () => {
   })
 
   describe('Layout', () => {
-    it('should have dark background', () => {
+    it('should have gradient background', () => {
       const { container } = render(<AdminSidebar />)
 
       const sidebar = container.firstChild as HTMLElement
-      expect(sidebar).toHaveClass('bg-gray-900')
+      expect(sidebar).toHaveClass('bg-gradient-to-b')
     })
 
     it('should use flex column layout', () => {

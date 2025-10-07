@@ -64,14 +64,16 @@ export default async function AdminDashboardPage() {
   const topProducts = topProductsResult.data!
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Welcome to the admin dashboard</p>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+          Dashboard
+        </h1>
+        <p className="text-muted-foreground text-lg">Welcome to the admin dashboard</p>
       </div>
 
       {/* Metric Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Total Revenue"
           value={formatCurrency(metrics.totalRevenue)}
@@ -102,7 +104,7 @@ export default async function AdminDashboardPage() {
       <SalesChart data={salesData} />
 
       {/* Two Column Layout */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Low Stock Alert */}
         <LowStockAlert products={lowStockProducts} />
 

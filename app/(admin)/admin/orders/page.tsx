@@ -58,10 +58,12 @@ export default async function AdminOrdersPage({
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
-        <p className="text-muted-foreground mt-2">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+          Orders
+        </h1>
+        <p className="text-muted-foreground text-lg">
           Manage all orders ({pagination.total} total)
         </p>
       </div>

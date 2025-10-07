@@ -29,36 +29,48 @@ export default function SalesChart({ data }: SalesChartProps) {
   }))
 
   return (
-    <Card className="col-span-full">
+    <Card className="col-span-full border-border/40 shadow-soft">
       <CardHeader>
-        <CardTitle>Sales Overview</CardTitle>
-        <CardDescription>Daily sales for the last 30 days</CardDescription>
+        <CardTitle className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+          Sales Overview
+        </CardTitle>
+        <CardDescription className="text-muted-foreground">
+          Daily sales for the last 30 days
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={formattedData}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
               <XAxis
                 dataKey="displayDate"
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                 interval="preserveStartEnd"
+                stroke="hsl(var(--border))"
               />
               <YAxis
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                 tickFormatter={(value) => `$${value}`}
+                stroke="hsl(var(--border))"
               />
               <Tooltip
                 formatter={(value: number) => [`$${value.toFixed(2)}`, 'Sales']}
                 labelFormatter={(label) => `Date: ${label}`}
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '0.5rem',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                }}
               />
               <Line
                 type="monotone"
                 dataKey="sales"
-                stroke="#2563eb"
-                strokeWidth={2}
-                dot={{ fill: '#2563eb', r: 3 }}
-                activeDot={{ r: 5 }}
+                stroke="hsl(var(--primary))"
+                strokeWidth={3}
+                dot={{ fill: 'hsl(var(--primary))', r: 4, strokeWidth: 0 }}
+                activeDot={{ r: 6, fill: 'hsl(var(--primary))', strokeWidth: 2, stroke: 'hsl(var(--background))' }}
               />
             </LineChart>
           </ResponsiveContainer>
