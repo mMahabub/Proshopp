@@ -5,9 +5,9 @@ import Link from 'next/link';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="relative border-t-2 border-primary/10 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-card dark:via-card dark:to-card/50 mt-24">
+    <footer className="relative border-t-2 border-primary/10 bg-gradient-to-br from-slate-100 via-gray-50 to-slate-50 dark:from-card dark:via-card dark:to-card/50 mt-24">
       {/* Decorative gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-secondary/8 to-accent/8 pointer-events-none" />
 
       <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent" />
 

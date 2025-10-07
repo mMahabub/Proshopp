@@ -7,9 +7,9 @@ import Menu from "./menu";
 
 const Header = () => {
     return (
-         <header className="w-full border-b-2 border-primary/10 bg-white dark:bg-card backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_20px_rgba(99,102,241,0.08)]">
+         <header className="w-full border-b-2 border-primary/10 bg-gradient-to-r from-slate-50 via-gray-50 to-slate-50 dark:bg-card backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_20px_rgba(99,102,241,0.08)]">
         {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/3 via-secondary/3 to-accent/3 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 pointer-events-none" />
 
         {/* Decorative gradient line */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent" />
