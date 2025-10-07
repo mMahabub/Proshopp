@@ -7,9 +7,9 @@ import Menu from "./menu";
 
 const Header = () => {
     return (
-         <header className="w-full border-b-2 border-primary/10 bg-gradient-to-r from-slate-50 via-gray-50 to-slate-50 dark:bg-card backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_20px_rgba(99,102,241,0.08)]">
+         <header className="w-full border-b-2 border-white/10 bg-[oklch(39.8%_0.07_227.392)] backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_20px_rgba(0,0,0,0.3)]">
         {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 pointer-events-none" />
 
         {/* Decorative gradient line */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent" />
@@ -19,18 +19,18 @@ const Header = () => {
                 <Link href='/' className="flex-start gap-3 group">
                 <div className="relative">
                   {/* Glow effect on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300 rounded-full" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-300 rounded-full" />
                   <Image
                     src='/images/logo.svg'
                     alt={`${APP_NAME} logo `}
                     height={48}
                     width={48}
                     priority={true}
-                    className="relative transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+                    className="relative transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 brightness-0 invert"
                   />
                 </div>
                 <div className="hidden lg:block">
-                  <span className="font-bold text-2xl bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                  <span className="font-bold text-2xl text-white">
                     {APP_NAME}
                   </span>
                   <div className="h-0.5 w-0 group-hover:w-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 rounded-full" />

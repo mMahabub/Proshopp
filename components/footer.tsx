@@ -5,9 +5,9 @@ import Link from 'next/link';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="relative border-t-2 border-primary/10 bg-gradient-to-br from-slate-100 via-gray-50 to-slate-50 dark:from-card dark:via-card dark:to-card/50 mt-24">
+    <footer className="relative border-t-2 border-white/10 bg-[oklch(39.8%_0.07_227.392)] mt-24">
       {/* Decorative gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-secondary/8 to-accent/8 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 pointer-events-none" />
 
       <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent" />
 
@@ -15,13 +15,13 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand Section */}
           <div className="space-y-4">
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            <h3 className="text-2xl font-bold text-white">
               {APP_NAME}
             </h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <p className="text-sm text-gray-300 leading-relaxed">
               Your trusted destination for premium products at unbeatable prices. Quality and customer satisfaction guaranteed.
             </p>
-            <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="space-y-2 text-sm text-gray-300">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-primary" />
                 <span>support@proshopp.com</span>
@@ -39,25 +39,25 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg text-foreground">Quick Links</h4>
+            <h4 className="font-semibold text-lg text-white">Quick Links</h4>
             <ul className="space-y-2.5">
               <li>
-                <Link href="/search" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/search" className="text-sm text-gray-300 hover:text-primary transition-colors">
                   Shop All Products
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/about" className="text-sm text-gray-300 hover:text-primary transition-colors">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/contact" className="text-sm text-gray-300 hover:text-primary transition-colors">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <Link href="/blog" className="text-sm text-gray-300 hover:text-primary transition-colors">
                   Blog
                 </Link>
               </li>
@@ -66,30 +66,30 @@ const Footer = () => {
 
           {/* Customer Service */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg text-foreground">Customer Service</h4>
+            <h4 className="font-semibold text-lg text-white">Customer Service</h4>
             <ul className="space-y-2.5">
               <li>
-                <Link href="/shipping" className="text-sm text-muted-foreground hover:text-secondary transition-colors">
+                <Link href="/shipping" className="text-sm text-gray-300 hover:text-secondary transition-colors">
                   Shipping Information
                 </Link>
               </li>
               <li>
-                <Link href="/returns" className="text-sm text-muted-foreground hover:text-secondary transition-colors">
+                <Link href="/returns" className="text-sm text-gray-300 hover:text-secondary transition-colors">
                   Returns & Exchanges
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-sm text-muted-foreground hover:text-secondary transition-colors">
+                <Link href="/faq" className="text-sm text-gray-300 hover:text-secondary transition-colors">
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="text-sm text-muted-foreground hover:text-secondary transition-colors">
+                <Link href="/privacy" className="text-sm text-gray-300 hover:text-secondary transition-colors">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="text-sm text-muted-foreground hover:text-secondary transition-colors">
+                <Link href="/terms" className="text-sm text-gray-300 hover:text-secondary transition-colors">
                   Terms of Service
                 </Link>
               </li>
@@ -98,71 +98,71 @@ const Footer = () => {
 
           {/* Social Links */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-lg text-foreground">Connect With Us</h4>
-            <p className="text-sm text-muted-foreground">
+            <h4 className="font-semibold text-lg text-white">Connect With Us</h4>
+            <p className="text-sm text-gray-300">
               Follow us on social media for updates, deals, and more.
             </p>
             <div className="grid grid-cols-3 gap-3">
               <a
                 href="#"
-                className="group relative p-3 rounded-lg border border-border/40 bg-card hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
+                className="group relative p-3 rounded-lg border border-white/20 bg-white/5 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
                 aria-label="Facebook"
               >
-                <Facebook className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                <Facebook className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" />
               </a>
               <a
                 href="#"
-                className="group relative p-3 rounded-lg border border-border/40 bg-card hover:border-accent/50 hover:bg-accent/5 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
+                className="group relative p-3 rounded-lg border border-white/20 bg-white/5 hover:border-accent/50 hover:bg-accent/10 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
                 aria-label="Twitter"
               >
-                <Twitter className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                <Twitter className="w-5 h-5 text-gray-300 group-hover:text-accent transition-colors" />
               </a>
               <a
                 href="#"
-                className="group relative p-3 rounded-lg border border-border/40 bg-card hover:border-secondary/50 hover:bg-secondary/5 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
+                className="group relative p-3 rounded-lg border border-white/20 bg-white/5 hover:border-secondary/50 hover:bg-secondary/10 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5 text-muted-foreground group-hover:text-secondary transition-colors" />
+                <Instagram className="w-5 h-5 text-gray-300 group-hover:text-secondary transition-colors" />
               </a>
               <a
                 href="#"
-                className="group relative p-3 rounded-lg border border-border/40 bg-card hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
+                className="group relative p-3 rounded-lg border border-white/20 bg-white/5 hover:border-primary/50 hover:bg-primary/10 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
                 aria-label="LinkedIn"
               >
-                <Linkedin className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                <Linkedin className="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" />
               </a>
               <a
                 href="#"
-                className="group relative p-3 rounded-lg border border-border/40 bg-card hover:border-accent/50 hover:bg-accent/5 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
+                className="group relative p-3 rounded-lg border border-white/20 bg-white/5 hover:border-accent/50 hover:bg-accent/10 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
                 aria-label="GitHub"
               >
-                <Github className="w-5 h-5 text-muted-foreground group-hover:text-accent transition-colors" />
+                <Github className="w-5 h-5 text-gray-300 group-hover:text-accent transition-colors" />
               </a>
               <a
                 href="#"
-                className="group relative p-3 rounded-lg border border-border/40 bg-card hover:border-destructive/50 hover:bg-destructive/5 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
+                className="group relative p-3 rounded-lg border border-white/20 bg-white/5 hover:border-destructive/50 hover:bg-destructive/10 transition-all duration-300 hover:shadow-medium flex items-center justify-center"
                 aria-label="YouTube"
               >
-                <Youtube className="w-5 h-5 text-muted-foreground group-hover:text-destructive transition-colors" />
+                <Youtube className="w-5 h-5 text-gray-300 group-hover:text-destructive transition-colors" />
               </a>
             </div>
           </div>
         </div>
 
         {/* Bottom Section */}
-        <div className="pt-8 border-t border-border/40">
+        <div className="pt-8 border-t border-white/20">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground text-center md:text-left">
+            <p className="text-sm text-gray-300 text-center md:text-left">
               &copy; {currentYear} {APP_NAME}. All Rights Reserved. Built with passion by the ProShopp Team.
             </p>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link href="/privacy" className="hover:text-primary transition-colors">
+            <div className="flex gap-6 text-sm text-gray-300">
+              <Link href="/privacy" className="hover:text-white transition-colors">
                 Privacy
               </Link>
-              <Link href="/terms" className="hover:text-primary transition-colors">
+              <Link href="/terms" className="hover:text-white transition-colors">
                 Terms
               </Link>
-              <Link href="/cookies" className="hover:text-primary transition-colors">
+              <Link href="/cookies" className="hover:text-white transition-colors">
                 Cookies
               </Link>
             </div>

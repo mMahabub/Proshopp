@@ -38,7 +38,7 @@ export default function CartIcon({ className }: CartIconProps = {}) {
       asChild
       variant="ghost"
       className={cn(
-        "flex items-center gap-2 hover:bg-gray-200 transition-all duration-200 rounded-lg px-3 py-2 relative",
+        "flex items-center gap-2 text-white hover:bg-white/20 transition-all duration-200 rounded-lg px-3 py-2 relative",
         className
       )}
     >
@@ -46,7 +46,7 @@ export default function CartIcon({ className }: CartIconProps = {}) {
         <ShoppingCart className="w-5 h-5" />
         <span>Cart</span>
         {isMounted && itemCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-semibold text-white">
             {itemCount}
           </span>
         )}

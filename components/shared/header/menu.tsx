@@ -26,7 +26,7 @@ const Menu = async () => {
   const session = await auth()
 
   return (
-    <div className="flex justify-end gap-4 p-4 bg-gray-100 rounded-lg">
+    <div className="flex justify-end gap-4 p-4">
       {/* Desktop Navigation */}
       <nav className="hidden md:flex w-full max-w-sm gap-3 items-center">
         <MoodToggle />
@@ -36,7 +36,7 @@ const Menu = async () => {
         ) : (
           <Button
             asChild
-            className="flex items-center gap-2 bg-blue-500 text-white hover:bg-blue-400 transition-all duration-200 rounded-lg px-3 py-2"
+            className="flex items-center gap-2 bg-primary text-white hover:bg-primary/90 transition-all duration-200 rounded-lg px-3 py-2"
           >
             <Link href="/sign-in">
               <UserIcon className="w-5 h-5" /> <span>Sign In</span>
@@ -48,7 +48,7 @@ const Menu = async () => {
       {/* Mobile Navigation */}
       <nav className="md:hidden">
         <Sheet>
-          <SheetTrigger className="align-middle hover:bg-gray-200 transition-all duration-200 rounded-full p-2">
+          <SheetTrigger className="align-middle hover:bg-white/20 transition-all duration-200 rounded-full p-2 text-white">
             <EllipsisVertical className="w-6 h-6" />
           </SheetTrigger>
           <SheetContent className="flex flex-col items-start gap-4 p-4 bg-white rounded-lg">

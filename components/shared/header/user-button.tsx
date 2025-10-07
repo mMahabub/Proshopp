@@ -43,10 +43,10 @@ export default function UserButton({ user }: UserButtonProps) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex items-center gap-2 hover:bg-gray-200 transition-all duration-200 rounded-lg px-3 py-2"
+          className="flex items-center gap-2 text-white hover:bg-white/20 transition-all duration-200 rounded-lg px-3 py-2"
         >
           {/* User Avatar */}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white text-sm font-semibold">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white text-sm font-semibold">
             {user.image ? (
               <Image
                 src={user.image}
