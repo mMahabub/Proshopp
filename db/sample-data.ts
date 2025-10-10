@@ -7,14 +7,16 @@ const sampleData = {
       email: 'admin@example.com',
       password: hashSync('12345678', 10), // Use bcrypt to hash the password
       role: 'admin',
+      emailVerified: new Date(), // Email verified for testing
     },
     {
       name: 'Jane',
       email: 'user@example.com',
       password: hashSync('12345678', 10), // Use bcrypt to hash the password
       role: 'user',
+      emailVerified: new Date(), // Email verified for testing
     }
-    
+
   ],
 
 

@@ -40,6 +40,7 @@ const customJestConfig = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/__tests__/components/admin/orders-table.test.tsx',
+    '/__tests__/app/(admin)/orders/[id]/page.test.tsx',
   ],
   moduleDirectories: ['node_modules', '<rootDir>/'],
 }

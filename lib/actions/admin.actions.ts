@@ -405,3 +405,166 @@ export async function getAllOrders(params?: {
     }
   }
 }
+
+/**
+ * Get all users with pagination and search
+ */
+export async function getAllUsers(params?: {
+  page?: number
+  limit?: number
+  search?: string
+}) {
+  try {
+    const session = await auth()
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: 'You must be signed in',
+      }
+    }
+
+    // Check if user is admin
+    if (session.user.role !== 'admin') {
+      return {
+        success: false,
+        message: 'Only administrators can view users',
+      }
+    }
+
+    const page = params?.page || 1
+    const limit = params?.limit || 10
+    const skip = (page - 1) * limit
+
+    // Build where clause
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {}
+
+    if (params?.search) {
+      where.OR = [
+        {
+          name: {
+            contains: params.search,
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          email: {
+            contains: params.search,
+            mode: 'insensitive' as const,
+          },
+        },
+      ]
+    }
+
+    // Get total count
+    const totalCount = await prisma.user.count({ where })
+
+    // Get users
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+        emailVerified: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take: limit,
+    })
+
+    return {
+      success: true,
+      data: {
+        users,
+        pagination: {
+          total: totalCount,
+          page,
+          limit,
+          totalPages: Math.ceil(totalCount / limit),
+        },
+      },
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch users',
+    }
+  }
+}
+
+/**
+ * Update user role (admin only)
+ */
+export async function updateUserRole(input: {
+  userId: string
+  role: 'user' | 'admin'
+}) {
+  try {
+    const session = await auth()
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        message: 'You must be signed in',
+      }
+    }
+
+    // Check if user is admin
+    if (session.user.role !== 'admin') {
+      return {
+        success: false,
+        message: 'Only administrators can update user roles',
+      }
+    }
+
+    // Validate role
+    if (input.role !== 'user' && input.role !== 'admin') {
+      return {
+        success: false,
+        message: 'Invalid role. Must be "user" or "admin"',
+      }
+    }
+
+    // Prevent users from changing their own role
+    if (input.userId === session.user.id) {
+      return {
+        success: false,
+        message: 'You cannot change your own role',
+      }
+    }
+
+    // Check if target user exists
+    const targetUser = await prisma.user.findUnique({
+      where: { id: input.userId },
+    })
+
+    if (!targetUser) {
+      return {
+        success: false,
+        message: 'User not found',
+      }
+    }
+
+    // Update user role
+    const updatedUser = await prisma.user.update({
+      where: { id: input.userId },
+      data: { role: input.role },
+    })
+
+    return {
+      success: true,
+      data: updatedUser,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update user role',
+    }
+  }
+}

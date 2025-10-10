@@ -222,6 +222,13 @@ export async function getOrder(orderId: string) {
             },
           },
         },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
     })
 

@@ -1,14 +1,18 @@
-import { getLatestProducts } from "@/lib/actions/product.actions";
+import { getLatestProducts, getFeaturedProducts } from "@/lib/actions/product.actions";
 import ProductList from "@/components/shared/product/product-list";
+import ProductCarousel from "@/components/shared/product/product-carousel";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, Zap, Shield, Truck } from "lucide-react";
 import Link from "next/link";
+import ErrorHandler from "@/components/shared/error-handler";
 
 const Homepage = async () => {
   const latestProducts = await getLatestProducts();
+  const featuredProducts = await getFeaturedProducts();
 
   return (
     <>
+      <ErrorHandler />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 py-20 mb-16 rounded-2xl border border-border/40">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
@@ -36,6 +40,9 @@ const Homepage = async () => {
           </div>
         </div>
       </section>
+
+      {/* Featured Products Carousel */}
+      <ProductCarousel products={featuredProducts} />
 
       {/* Features Section */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">

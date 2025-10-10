@@ -40,8 +40,10 @@ export default auth((req) => {
     }
 
     if (userRole !== 'admin') {
-      // Redirect non-admin users to homepage
-      return NextResponse.redirect(new URL('/', nextUrl))
+      // Redirect non-admin users to homepage with error message
+      const homeUrl = new URL('/', nextUrl)
+      homeUrl.searchParams.set('error', 'admin_required')
+      return NextResponse.redirect(homeUrl)
     }
   }
 
