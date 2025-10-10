@@ -28,6 +28,23 @@ npx prisma migrate status   # Check migration status
 npx prisma validate         # Validate Prisma schema
 ```
 
+### Admin Access Management
+```bash
+# List all users in database
+npx tsx scripts/list-users.ts
+
+# Upgrade a user to admin role
+npx tsx scripts/make-admin.ts <user-email>
+
+# Example: Upgrade your Google/GitHub OAuth account to admin
+npx tsx scripts/make-admin.ts your-email@gmail.com
+```
+
+**Admin Credentials:**
+- **Credential Login:** email: `admin@example.com`, password: `12345678`
+- **OAuth Users:** Use the make-admin script to upgrade your Google/GitHub account to admin role
+- **Admin Pages:** http://localhost:3000/admin (requires admin role)
+
 ### 🔴 Database Migration Verification (MANDATORY)
 
 **After running ANY database migration, you MUST verify the changes in the actual database:**
