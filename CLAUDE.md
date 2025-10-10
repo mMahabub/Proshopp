@@ -535,6 +535,28 @@ Step 4: Success (/checkout/success)
 4. mode-toggle.tsx imports from Radix directly instead of UI component (line 4)
 5. Uncommitted migration: `20250421030636_add_user_based_t/`
 
+### Common Configuration Issues & Solutions
+
+#### UploadThing Image Upload Error
+**Error:** `Missing token. Please set the UPLOADTHING_TOKEN environment variable`
+
+**Cause:** UploadThing v7+ renamed the environment variable from `UPLOADTHING_SECRET` to `UPLOADTHING_TOKEN`.
+
+**Solution:**
+1. Open `.env` file
+2. Add `UPLOADTHING_TOKEN` with your UploadThing secret key:
+```env
+UPLOADTHING_TOKEN='your_uploadthing_secret_key'
+UPLOADTHING_SECRET='your_uploadthing_secret_key'  # Keep for backward compatibility
+UPLOADTHING_APP_ID='your_app_id'
+```
+3. Restart development server: `npm run dev`
+
+**Verification:**
+- Navigate to `/admin/products/add`
+- Try uploading product images
+- Upload should now work without token errors
+
 ### Upcoming Architecture Additions
 
 #### Authentication (Auth.js v5) - ✅ IMPLEMENTED
@@ -3606,8 +3628,11 @@ STRIPE_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# UploadThing
-UPLOADTHING_SECRET=...
+# UploadThing (v7+)
+# IMPORTANT: UploadThing v7+ requires UPLOADTHING_TOKEN instead of UPLOADTHING_SECRET
+# Keep both for backward compatibility
+UPLOADTHING_TOKEN=...  # Required for v7+
+UPLOADTHING_SECRET=... # Legacy (kept for compatibility)
 UPLOADTHING_APP_ID=...
 
 # Resend
