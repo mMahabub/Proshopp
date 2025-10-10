@@ -37,8 +37,18 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
   }
 
   return (
-    <section className="w-full bg-gradient-to-b from-muted/30 to-background py-8">
+    <section className="w-full bg-gradient-to-b from-muted/30 to-background py-12">
       <div className="container mx-auto px-4">
+        {/* Section Title */}
+        <div className="mb-8 text-center">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            Featured Products
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Discover our handpicked selection
+          </p>
+        </div>
+
         <Carousel
           opts={{
             align: 'start',
@@ -46,53 +56,44 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
           }}
           plugins={[
             Autoplay({
-              delay: 5000,
+              delay: 3000,
               stopOnInteraction: true,
               stopOnMouseEnter: true,
             }),
           ]}
           className="w-full"
         >
-          <CarouselContent>
+          <CarouselContent className="-ml-4">
             {products.map((product) => (
-              <CarouselItem key={product.id}>
-                <Link href={`/product/${product.slug}`} className="block">
-                  <div className="relative aspect-[21/9] w-full overflow-hidden rounded-lg bg-muted">
+              <CarouselItem key={product.id} className="pl-4 basis-1/2 md:basis-1/3 lg:basis-1/4">
+                <Link href={`/product/${product.slug}`} className="block group">
+                  <div className="relative overflow-hidden rounded-xl border border-border/40 bg-card transition-all duration-300 hover:shadow-strong hover:border-primary/30">
                     {/* Product Image */}
-                    <Image
-                      src={product.images[0] || '/placeholder.png'}
-                      alt={product.name}
-                      fill
-                      className="object-cover transition-transform duration-700 hover:scale-105"
-                      priority
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
-                    />
+                    <div className="relative aspect-square w-full overflow-hidden bg-muted">
+                      <Image
+                        src={product.images[0] || '/placeholder.png'}
+                        alt={product.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                      />
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-                    {/* Product Info Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                      <div className="max-w-4xl">
-                        <h2 className="mb-2 text-3xl font-bold md:text-4xl lg:text-5xl">
-                          {product.name}
-                        </h2>
-                        <p className="text-2xl font-semibold md:text-3xl">
-                          ${formatNumberWithDecimal(Number(product.price))}
-                        </p>
-                        <div className="mt-4">
-                          <span className="inline-block rounded-full bg-primary px-6 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                            Shop Now
-                          </span>
-                        </div>
+                      {/* Featured Badge */}
+                      <div className="absolute right-2 top-2">
+                        <span className="rounded-full bg-gradient-to-r from-primary via-secondary to-accent px-3 py-1 text-xs font-semibold text-white shadow-md">
+                          Featured
+                        </span>
                       </div>
                     </div>
 
-                    {/* Featured Badge */}
-                    <div className="absolute right-4 top-4">
-                      <span className="rounded-full bg-gradient-to-r from-primary via-secondary to-accent px-4 py-1 text-sm font-semibold text-white shadow-lg">
-                        Featured
-                      </span>
+                    {/* Product Info Below Image */}
+                    <div className="p-4">
+                      <h3 className="text-sm font-medium line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                        {product.name}
+                      </h3>
+                      <p className="text-xl font-bold text-primary">
+                        ${formatNumberWithDecimal(Number(product.price))}
+                      </p>
                     </div>
                   </div>
                 </Link>
@@ -101,8 +102,8 @@ export default function ProductCarousel({ products }: ProductCarouselProps) {
           </CarouselContent>
 
           {/* Navigation Buttons */}
-          <CarouselPrevious className="left-4 h-10 w-10 border-2 border-white/80 bg-white/90 text-foreground transition-all hover:bg-white hover:scale-110" />
-          <CarouselNext className="right-4 h-10 w-10 border-2 border-white/80 bg-white/90 text-foreground transition-all hover:bg-white hover:scale-110" />
+          <CarouselPrevious className="left-2 h-10 w-10 border-2 border-border bg-background/95 text-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary" />
+          <CarouselNext className="right-2 h-10 w-10 border-2 border-border bg-background/95 text-foreground transition-all hover:bg-primary hover:text-primary-foreground hover:border-primary" />
         </Carousel>
       </div>
     </section>

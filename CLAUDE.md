@@ -223,21 +223,20 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
 ## Featured Products Carousel
 
 ### Overview
-The ProductCarousel component displays an auto-playing slideshow of featured products prominently on the homepage, positioned directly under the hero section.
+The ProductCarousel component displays an auto-playing horizontal carousel of featured products with multiple product cards visible at once. Located prominently on the homepage under the hero section.
 
 ### Implementation
 **Component**: `components/shared/product/product-carousel.tsx`
 
 **Features:**
-- Auto-plays every 5 seconds with smooth transitions
-- Pauses on hover (`stopOnMouseEnter: true`)
-- Stops on user interaction (`stopOnInteraction: true`)
-- Infinite loop enabled
-- 21:9 cinematic aspect ratio (wide banner style)
-- Gradient overlay for text readability
-- Navigation arrows (Previous/Next) with custom styling
-- Responsive design with optimized image loading
-- Links to individual product detail pages
+- **Responsive Layout**: Shows 2 products on mobile, 3 on tablet, 4 on desktop
+- **Auto-Play**: Smooth left-to-right auto-sliding every 3 seconds
+- **Interactive**: Pauses on hover (`stopOnMouseEnter: true`) and stops on user interaction
+- **Infinite Loop**: Continuous scrolling with seamless transitions
+- **Product Cards**: Standard square aspect ratio with hover effects
+- **Navigation**: Previous/Next arrows with hover states
+- **Section Header**: "Featured Products" title with gradient text effect
+- **Optimized Images**: Responsive sizing with Next.js Image component
 
 **Dependencies:**
 ```bash
@@ -284,24 +283,46 @@ const Homepage = async () => {
 ```
 
 **Component Structure:**
-- **Product Image**: Full-width with hover scale effect (scale-105 on hover)
-- **Gradient Overlay**: Black gradient from bottom (80% opacity) to top (transparent)
-- **Product Info**: Displays name, price, and "Shop Now" button over the gradient
-- **Featured Badge**: Positioned top-right with gradient background (primary → secondary → accent)
-- **Navigation Controls**: Circular buttons with white background and hover effects
+- **Section Title**: "Featured Products" with gradient text (primary → secondary → accent)
+- **Product Cards**: Each card includes:
+  - Square product image with hover zoom effect (scale-110)
+  - Small "Featured" badge in top-right corner
+  - Product name below image (line-clamp-2 for overflow)
+  - Price in primary color, bold formatting
+  - Border with hover effects (shadow and primary border color)
+- **Navigation Controls**: Arrows positioned on left/right with hover states
+
+**Responsive Breakpoints:**
+```typescript
+// CarouselItem basis classes
+className="basis-1/2 md:basis-1/3 lg:basis-1/4"
+
+// Shows:
+// - Mobile: 2 products per view
+// - Tablet (md): 3 products per view
+// - Desktop (lg+): 4 products per view
+```
 
 **Key Technical Details:**
 - Hydration-safe implementation using `isClient` state
 - Returns `null` if products array is empty or during SSR
-- Priority loading for carousel images (above-the-fold content)
-- Responsive image sizing with Next.js Image component
-- Autoplay plugin from embla-carousel-autoplay
+- Responsive image sizing: `sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"`
+- Gap between cards using `-ml-4` and `pl-4` pattern
+- Group hover effects for smooth card interactions
+- Autoplay delay: 3000ms (faster than previous 5000ms)
 
 **Styling:**
-- Background: Subtle gradient (`from-muted/30 to-background`)
-- Border radius: `rounded-lg` for modern look
-- Transition duration: 700ms for smooth scale animations
-- Typography: Responsive sizing (3xl → 4xl → 5xl for product names)
+- **Background**: Subtle gradient (`from-muted/30 to-background`)
+- **Cards**: Rounded corners (`rounded-xl`), border with hover effects
+- **Images**: Square aspect ratio (`aspect-square`), object-cover
+- **Hover Effects**:
+  - Image zoom: `scale-110` with 500ms transition
+  - Shadow: `hover:shadow-strong`
+  - Border: `hover:border-primary/30`
+  - Text: `group-hover:text-primary`
+- **Typography**:
+  - Product name: `text-sm` with line-clamp-2
+  - Price: `text-xl font-bold text-primary`
 
 ## Environment Variables
 Required environment variables:
