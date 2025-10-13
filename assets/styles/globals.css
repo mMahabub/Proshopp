@@ -54,21 +54,21 @@
 
 @layer base {
   :root {
-    /* Pale blue-gray background (#d4dbd8) */
-    --background: 154 9% 85%;
-    --foreground: 154 26% 23%;
+    /* Pearl white background (#fffef9) */
+    --background: 50 100% 99%;
+    --foreground: 199 100% 18%;
 
-    /* Card with subtle shadow */
-    --card: 154 9% 85%;
-    --card-foreground: 154 26% 23%;
+    /* Card with pearl white */
+    --card: 50 100% 99%;
+    --card-foreground: 199 100% 18%;
 
     /* Popover */
-    --popover: 154 9% 85%;
-    --popover-foreground: 154 26% 23%;
+    --popover: 50 100% 99%;
+    --popover-foreground: 199 100% 18%;
 
-    /* Primary: Soft blush (#e8d5d2) */
-    --primary: 8 33% 87%;
-    --primary-foreground: 154 26% 23%;
+    /* Primary: Coral (#ff6b6b) */
+    --primary: 0 100% 71%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary: Elegant purple (kept for contrast) */
     --secondary: 262 83% 58%;
@@ -78,9 +78,9 @@
     --muted: 220 13% 95%;
     --muted-foreground: 220 9% 46%;
 
-    /* Accent: Soft blush accent (#e8d5d2) */
-    --accent: 8 33% 87%;
-    --accent-foreground: 154 26% 23%;
+    /* Accent: Coral accent (#ff6b6b) */
+    --accent: 0 100% 71%;
+    --accent-foreground: 0 0% 100%;
 
     /* Destructive: Modern rose */
     --destructive: 350 89% 60%;
@@ -97,10 +97,10 @@
     /* Borders and inputs */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 8 33% 87%;
+    --ring: 0 100% 71%;
 
     /* Modern chart colors */
-    --chart-1: 8 33% 87%;
+    --chart-1: 0 100% 71%;
     --chart-2: 262 83% 58%;
     --chart-3: 142 76% 36%;
     --chart-4: 38 92% 50%;
