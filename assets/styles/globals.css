@@ -54,23 +54,23 @@
 
 @layer base {
   :root {
-    /* Modern neutral grays with slight cool tint */
-    --background: 220 15% 98%;
-    --foreground: 222 47% 11%;
+    /* Soft gray-white background (#e8eae6) */
+    --background: 90 7% 91%;
+    --foreground: 0 0% 29%;
 
     /* Card with subtle shadow */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 90 7% 91%;
+    --card-foreground: 0 0% 29%;
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 90 7% 91%;
+    --popover-foreground: 0 0% 29%;
 
-    /* Primary: Professional indigo-blue */
-    --primary: 239 84% 67%;
+    /* Primary: Deep eucalyptus (#6b7c68) */
+    --primary: 111 9% 45%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Elegant purple */
+    /* Secondary: Elegant purple (kept for contrast) */
     --secondary: 262 83% 58%;
     --secondary-foreground: 0 0% 100%;
 
@@ -78,8 +78,8 @@
     --muted: 220 13% 95%;
     --muted-foreground: 220 9% 46%;
 
-    /* Accent: Fresh teal */
-    --accent: 173 80% 40%;
+    /* Accent: Deep eucalyptus accent (#6b7c68) */
+    --accent: 111 9% 45%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive: Modern rose */
@@ -97,14 +97,14 @@
     /* Borders and inputs */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 239 84% 67%;
+    --ring: 111 9% 45%;
 
     /* Modern chart colors */
-    --chart-1: 239 84% 67%;
-    --chart-2: 173 80% 40%;
-    --chart-3: 262 83% 58%;
-    --chart-4: 142 76% 36%;
-    --chart-5: 38 92% 50%;
+    --chart-1: 111 9% 45%;
+    --chart-2: 262 83% 58%;
+    --chart-3: 142 76% 36%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 350 89% 60%;
 
     /* Modern border radius */
     --radius: 0.75rem;
@@ -123,8 +123,8 @@
     --popover: 222 47% 14%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary: Lighter indigo for dark mode */
-    --primary: 239 84% 67%;
+    /* Primary: Bright blue for dark mode */
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary: Lighter purple for dark mode */
@@ -135,8 +135,8 @@
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    /* Accent in dark mode */
-    --accent: 173 80% 40%;
+    /* Accent: Teal-blue for dark mode */
+    --accent: 188 78% 41%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive in dark mode */
@@ -154,11 +154,11 @@
     /* Borders and inputs in dark mode */
     --border: 217 33% 24%;
     --input: 217 33% 24%;
-    --ring: 239 84% 67%;
+    --ring: 211 100% 50%;
 
     /* Chart colors in dark mode */
-    --chart-1: 239 84% 67%;
-    --chart-2: 173 80% 45%;
+    --chart-1: 211 100% 50%;
+    --chart-2: 188 78% 45%;
     --chart-3: 262 83% 58%;
     --chart-4: 142 71% 45%;
     --chart-5: 38 92% 50%;

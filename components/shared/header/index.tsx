@@ -11,12 +11,12 @@ const Header = async () => {
     const session = await auth();
 
     return (
-         <header className="w-full border-b-2 border-white/10 bg-[oklch(39.8%_0.07_227.392)] backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_20px_rgba(0,0,0,0.3)]">
+         <header className="w-full border-b-2 border-white/10 bg-[#8b9d83] backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_20px_rgba(0,0,0,0.3)]">
         {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#6b7c68]/10 via-[#6b7c68]/5 to-[#6b7c68]/10 pointer-events-none" />
 
         {/* Decorative gradient line */}
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-secondary to-accent" />
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#6b7c68] via-[#7a8d77] to-[#6b7c68]" />
 
         <div className="wrapper flex-between py-5 relative z-10">
             <div className="flex-start gap-3">
