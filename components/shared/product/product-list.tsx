@@ -1,6 +1,14 @@
 import ProductCard from './product-card';
 import { Product } from '@/types';
-const ProductList = ({ data, title }: { data: Product[]; title?: string; limit?: number; }) => {
+
+interface ProductListProps {
+  data: Product[];
+  title?: string;
+  limit?: number;
+  featured?: boolean;
+}
+
+const ProductList = ({ data, title, featured = false }: ProductListProps) => {
   return (
     <section className="my-16 animate-in">
       <div className="mb-8">
@@ -12,7 +20,7 @@ const ProductList = ({ data, title }: { data: Product[]; title?: string; limit?:
       {data.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
           {data.map((product: Product) => (
-            <ProductCard key={product.slug} product={product} />
+            <ProductCard key={product.slug} product={product} featured={featured} />
           ))}
         </div>
       ) : (

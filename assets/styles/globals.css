@@ -54,21 +54,21 @@
 
 @layer base {
   :root {
-    /* Soft gray-white background (#e8eae6) */
-    --background: 90 7% 91%;
-    --foreground: 0 0% 29%;
+    /* Pale blue-gray background (#d4dbd8) */
+    --background: 154 9% 85%;
+    --foreground: 154 26% 23%;
 
     /* Card with subtle shadow */
-    --card: 90 7% 91%;
-    --card-foreground: 0 0% 29%;
+    --card: 154 9% 85%;
+    --card-foreground: 154 26% 23%;
 
     /* Popover */
-    --popover: 90 7% 91%;
-    --popover-foreground: 0 0% 29%;
+    --popover: 154 9% 85%;
+    --popover-foreground: 154 26% 23%;
 
-    /* Primary: Deep eucalyptus (#6b7c68) */
-    --primary: 111 9% 45%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary: Soft blush (#e8d5d2) */
+    --primary: 8 33% 87%;
+    --primary-foreground: 154 26% 23%;
 
     /* Secondary: Elegant purple (kept for contrast) */
     --secondary: 262 83% 58%;
@@ -78,9 +78,9 @@
     --muted: 220 13% 95%;
     --muted-foreground: 220 9% 46%;
 
-    /* Accent: Deep eucalyptus accent (#6b7c68) */
-    --accent: 111 9% 45%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent: Soft blush accent (#e8d5d2) */
+    --accent: 8 33% 87%;
+    --accent-foreground: 154 26% 23%;
 
     /* Destructive: Modern rose */
     --destructive: 350 89% 60%;
@@ -97,10 +97,10 @@
     /* Borders and inputs */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 111 9% 45%;
+    --ring: 8 33% 87%;
 
     /* Modern chart colors */
-    --chart-1: 111 9% 45%;
+    --chart-1: 8 33% 87%;
     --chart-2: 262 83% 58%;
     --chart-3: 142 76% 36%;
     --chart-4: 38 92% 50%;
