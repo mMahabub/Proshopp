@@ -142,6 +142,7 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
   - `components/shared/product/` - Product-specific components (ProductCard, ProductList, ProductPrice, ProductImages, ProductCarousel)
   - `components/shared/product/product-carousel.tsx` - Auto-playing carousel for featured products on homepage
   - `components/shared/header/` - Header components (Menu, ModeToggle)
+  - `components/shared/navigation-drawer.tsx` - **Sliding navigation drawer component** (see Navigation Drawer section below)
   - `components/shared/placeholder-page.tsx` - Reusable "Coming Soon" page component with gradient icons and expected launch dates
 
 - **`db/`** - Database configuration and seeding
@@ -236,6 +237,148 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
   - `avatars.githubusercontent.com` - GitHub OAuth profile pictures (path: `/u/**`)
 - Products support multiple images as string arrays
 - Next.js Image component optimizes all remote images automatically
+
+## Navigation Drawer
+
+### Overview
+The NavigationDrawer component provides a comprehensive sliding sidebar navigation that opens from the left side of the screen when the hamburger menu icon is clicked. This component gives users easy access to all pages in the application without needing to type URLs manually.
+
+### Implementation
+**Component**: `components/shared/navigation-drawer.tsx`
+
+**Integration**: `components/shared/header/index.tsx` (integrated in header, left side)
+
+### Key Features
+
+**User Experience:**
+- ✅ **Left-to-Right Slide Animation**: Smooth drawer animation from left side using shadcn/ui Sheet component
+- ✅ **Hamburger Menu Icon**: Prominent Menu icon button (lucide-react) positioned on the left side of the header
+- ✅ **Auto-Close on Navigation**: Drawer automatically closes when user clicks any navigation link
+- ✅ **Responsive Design**: 320px width (w-80), scrollable content for long navigation lists
+- ✅ **User Info Display**: Shows user name, email, and admin badge (if applicable) at the top
+
+**Navigation Organization:**
+The drawer organizes all navigation links into 4 main sections:
+
+1. **Shop Section** - Core shopping links
+   - Home (/)
+   - Search Products (/search)
+   - Shopping Cart (/cart)
+   - My Orders (/orders) - *Requires authentication*
+
+2. **Account Section** - User account management
+   - Profile (/profile) - *Requires authentication*
+   - Sign In (/sign-in) - *Only shown to guests*
+   - Sign Up (/sign-up) - *Only shown to guests*
+
+3. **Information Section** - Informational pages
+   - About Us (/about)
+   - Contact (/contact)
+   - FAQ (/faq)
+   - Blog (/blog)
+   - Shipping Info (/shipping)
+   - Returns (/returns)
+   - Privacy Policy (/privacy)
+   - Terms of Service (/terms)
+
+4. **Admin Panel Section** - Admin-only links (only visible to admin users)
+   - Dashboard (/admin)
+   - Products (/admin/products)
+   - Orders (/admin/orders)
+   - Users (/admin/users)
+
+**Visual Features:**
+- ✅ **Icons for All Links**: Each navigation item has a corresponding icon from lucide-react
+- ✅ **Active Route Highlighting**: Current page is highlighted with primary color background
+- ✅ **Hover Effects**: Non-active links show hover states with muted background
+- ✅ **Conditional Rendering**: Links appear/disappear based on authentication state and user role
+- ✅ **Copyright Footer**: Small footer with copyright notice at the bottom of the drawer
+
+### Technical Implementation
+
+**Authentication Integration:**
+```typescript
+// In header/index.tsx
+const session = await auth();
+
+// Pass user data to NavigationDrawer
+<NavigationDrawer user={session?.user || null} />
+```
+
+**Active Route Detection:**
+```typescript
+const isActive = (href: string) => {
+  if (href === '/') {
+    return pathname === '/'
+  }
+  return pathname.startsWith(href)
+}
+```
+
+**Conditional Link Filtering:**
+```typescript
+const filteredLinks = links.filter((link) => {
+  if (link.requiresAdmin && user?.role !== 'admin') return false
+  if (link.requiresAuth && !user) return false
+  return true
+})
+```
+
+### shadcn/ui Components Used
+- **Sheet**: Sliding drawer component
+- **SheetTrigger**: Hamburger menu button
+- **SheetContent**: Drawer content with `side="left"` prop
+- **SheetHeader**: Drawer header with title
+- **SheetTitle**: "Navigation" heading
+- **Button**: For the menu icon trigger
+
+### Icons Used (lucide-react)
+- **Trigger**: Menu (hamburger icon)
+- **Shop**: Home, Search, ShoppingCart, Package
+- **Account**: User, LogIn, UserPlus
+- **Information**: Info, Mail, HelpCircle, FileText, Truck, RefreshCw, Shield, ScrollText
+- **Admin**: LayoutDashboard, Package, ShoppingCart, Users
+
+### Usage Example
+```typescript
+import NavigationDrawer from '../navigation-drawer'
+import { auth } from '@/auth'
+
+const Header = async () => {
+  const session = await auth()
+
+  return (
+    <header>
+      <div className="flex-start gap-3">
+        {/* Navigation Drawer - Left side */}
+        <NavigationDrawer user={session?.user || null} />
+
+        {/* Logo and other header content */}
+      </div>
+    </header>
+  )
+}
+```
+
+### Styling
+- **Button**: White text with white/20 transparency hover effect (matches header theme)
+- **Drawer**: Full-height, 320px width, white background
+- **Active Link**: Primary color background with white text
+- **Inactive Link**: Foreground text with muted background on hover
+- **Section Headers**: Uppercase, muted foreground, small font size
+
+### User Benefits
+1. **Easy Navigation**: All pages accessible without typing URLs
+2. **Context-Aware**: Only shows relevant links based on authentication and role
+3. **Professional UX**: Smooth animations and clear visual hierarchy
+4. **Mobile-Friendly**: Works perfectly on all screen sizes
+5. **Real-World Standard**: Familiar drawer pattern used by major applications
+
+### Verification
+✅ **Production Build**: Tested with `npm run build` - All 33 routes compiled successfully
+✅ **TypeScript**: No type errors
+✅ **ESLint**: No linting warnings
+✅ **Integration**: Successfully integrated into Header component with user session data
 
 ## Featured Products Carousel
 
