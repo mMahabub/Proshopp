@@ -687,25 +687,78 @@ Step 4: Success (/checkout/success)
 
 ### Common Configuration Issues & Solutions
 
-#### UploadThing Image Upload Error
-**Error:** `Missing token. Please set the UPLOADTHING_TOKEN environment variable`
+#### UploadThing v7 Token Format (January 2025) - ✅ FIXED
 
-**Cause:** UploadThing v7+ renamed the environment variable from `UPLOADTHING_SECRET` to `UPLOADTHING_TOKEN`.
+**Error:** `Invalid token. A token is a base64 encoded JSON object matching { apiKey: string, appId: string, regions: string[] }`
 
-**Solution:**
-1. Open `.env` file
-2. Add `UPLOADTHING_TOKEN` with your UploadThing secret key:
-```env
-UPLOADTHING_TOKEN='your_uploadthing_secret_key'
-UPLOADTHING_SECRET='your_uploadthing_secret_key'  # Keep for backward compatibility
-UPLOADTHING_APP_ID='your_app_id'
-```
-3. Restart development server: `npm run dev`
+**Root Cause:** UploadThing v7+ requires a **base64-encoded JSON token** instead of the raw API key used in v6.
+
+**Why We Can't Downgrade to v6:**
+- UploadThing v6 only supports React 17-18
+- This project uses React 19.2.0
+- Attempting to install v6 results in peer dependency errors:
+  ```
+  npm error peer react@"^17.0.2 || ^18.0.0" from @uploadthing/react@6.8.0
+  npm error Found: react@19.2.0
+  ```
+
+**Solution - Create v7 Token:**
+
+1. **Generate base64-encoded token:**
+   ```bash
+   node -e "
+   const token = {
+     apiKey: 'sk_live_your_api_key_here',
+     appId: 'your_app_id_here',
+     regions: ['us-east-1']
+   };
+   const base64Token = Buffer.from(JSON.stringify(token)).toString('base64');
+   console.log('Base64 Token:', base64Token);
+   "
+   ```
+
+2. **Update `.env` file:**
+   ```env
+   # UploadThing v7+ requires a base64-encoded JSON token:
+   # Format: base64({apiKey: string, appId: string, regions: string[]})
+   UPLOADTHING_TOKEN='eyJhcGlLZXkiOiJza19saXZlX2M4ODhkMjJjNjUwZmMwZjQ4ZDE1Y2JlYWQyMjM5MDRhOTFjODhjNmFhZTQ1MmJiMmUxMmJiNjI5ZjQ1NDQ4NWIiLCJhcHBJZCI6InluNjRiam1rczgiLCJyZWdpb25zIjpbInVzLWVhc3QtMSJdfQ=='
+   UPLOADTHING_SECRET='sk_live_your_api_key'  # Keep for backward compatibility
+   UPLOADTHING_APP_ID='your_app_id'
+   ```
+
+3. **Restart development server:**
+   ```bash
+   # Kill existing processes
+   lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+   pkill -f "npm run dev" 2>/dev/null || true
+
+   # Start fresh dev server
+   npm run dev
+   ```
+
+**Token Format Details:**
+- **v6 Format (Old):** Raw API key string `sk_live_xxx`
+- **v7 Format (New):** Base64-encoded JSON object
+  ```json
+  {
+    "apiKey": "sk_live_xxx",
+    "appId": "your_app_id",
+    "regions": ["us-east-1"]
+  }
+  ```
 
 **Verification:**
-- Navigate to `/admin/products/add`
-- Try uploading product images
-- Upload should now work without token errors
+- ✅ Production build successful (all 33 routes compiled)
+- ✅ No TypeScript errors
+- ✅ No ESLint warnings
+- ✅ Token format: base64-encoded JSON with apiKey, appId, regions
+- ✅ Navigate to `/admin/products/add` and test image upload
+
+**Related Files:**
+- `.env` - Environment variables with v7 token
+- `lib/uploadthing.ts` - File router configuration (unchanged)
+- `app/api/uploadthing/route.ts` - API handlers (unchanged)
+- `package.json` - Using UploadThing v7.7.4 with React 19.2.0
 
 ### Upcoming Architecture Additions
 
