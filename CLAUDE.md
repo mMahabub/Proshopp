@@ -10013,11 +10013,162 @@ Modern browsers support OKLCH natively. For older browsers, the color degrades g
 
 ---
 
-**Last Updated:** 2025-10-06  
-**Implementation:** Deep OKLCH Blue Background for Header & Footer  
-**Test Status:** ✅ All tests passing (540/540)  
+**Last Updated:** 2025-10-06
+**Implementation:** Deep OKLCH Blue Background for Header & Footer
+**Test Status:** ✅ All tests passing (540/540)
 **Build Status:** ✅ Production build successful
 
+
+---
+
+## Logo Visibility Fix - Deep Teal Color Scheme (January 2025)
+
+### Overview
+Fixed logo visibility issue in the header where the ProShopp logo appeared white/invisible after the deep teal color scheme implementation. The issue was caused by CSS filters that were not updated when the header background color changed.
+
+### Problem Diagnosis
+
+**User Report:** "i think its not showing it just look white"
+
+**Root Cause:**
+The header logo had CSS filters (`brightness-0 invert`) that converted any logo color to white. This was appropriate for the previous deep forest green background, but with the new deep teal `#003f5c` background, the white logo had poor visibility and didn't display the original ProShopp brand colors.
+
+**Affected File:** `components/shared/header/index.tsx` (line 36)
+
+### Implementation
+
+**Before (Problematic Code):**
+```tsx
+<Image
+  src='/images/logo.svg'
+  alt={`${APP_NAME} logo `}
+  height={48}
+  width={48}
+  priority={true}
+  className="relative transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 brightness-0 invert"
+/>
+```
+
+**After (Fixed Code):**
+```tsx
+<Image
+  src='/images/logo.svg'
+  alt={`${APP_NAME} logo `}
+  height={48}
+  width={48}
+  priority={true}
+  className="relative transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+/>
+```
+
+**Changes Made:**
+- ❌ Removed: `brightness-0 invert` CSS filters (line 36)
+- ✅ Preserved: All transition and transform animations
+- ✅ Result: Original logo colors now visible on deep teal background
+
+### CSS Filter Analysis
+
+**How the Filters Worked:**
+1. `brightness-0` → Converts image to solid black (0% brightness)
+2. `invert` → Inverts black to white (color inversion)
+3. **Result:** Any colored logo becomes a white silhouette
+
+**Why It Was Problematic:**
+- White logo on deep teal `#003f5c` provided insufficient contrast
+- Original ProShopp brand colors were hidden
+- Logo appeared "invisible" or "just white" (user's observation)
+
+### Visual Improvements
+
+**Before Fix:**
+- Logo: White silhouette (via CSS filters)
+- Visibility: Poor contrast on dark teal
+- Brand Identity: Hidden original colors
+
+**After Fix:**
+- Logo: Original ProShopp brand colors from `/images/logo.svg`
+- Visibility: Clear, professional appearance
+- Brand Identity: Proper brand representation
+
+### Verification Results
+
+✅ **TypeScript:** No errors
+✅ **ESLint:** No warnings
+✅ **Production Build:** All 33 routes compiled successfully
+✅ **Visual Test:** Logo displays with original colors on deep teal background
+✅ **Hover Effects:** Scale and rotation animations preserved
+
+**Build Output:**
+```bash
+npm run build
+✓ Compiled successfully
+✓ Linting and checking validity of types
+✓ Generating static pages (33/33)
+```
+
+### Technical Details
+
+**Background Color Context:**
+- Header: Deep teal `#003f5c` (from recent color scheme update)
+- Logo Container: Transparent with hover glow effect
+- Gradient Overlay: Coral `#ff6b6b` at 10% opacity
+
+**Preserved Functionality:**
+- ✅ Logo hover scale effect (`group-hover:scale-110`)
+- ✅ Logo hover rotation (`group-hover:rotate-3`)
+- ✅ Smooth transitions (300ms duration)
+- ✅ Gradient glow effect on hover (primary → secondary colors)
+- ✅ Next.js Image optimization with priority loading
+
+**Removed Elements:**
+- ❌ `brightness-0` - No longer needed with proper logo colors
+- ❌ `invert` - No longer needed with proper logo colors
+
+### Files Modified
+
+1. **`components/shared/header/index.tsx`**
+   - Line 36: Removed CSS filters from Image className
+   - All other functionality preserved
+
+2. **`CLAUDE.md`** (this file)
+   - Added comprehensive logo fix documentation
+
+### Design Rationale
+
+**Why Remove Filters Instead of Adjusting Color:**
+1. Original logo colors designed for brand identity
+2. SVG logos should display as intended by designers
+3. CSS filters hide original artwork and brand colors
+4. Proper logo colors provide better visual hierarchy
+5. Maintains consistency with ProShopp branding
+
+**Alternative Approaches Considered:**
+- ❌ Adjust filter opacity - Still hides original colors
+- ❌ Add drop shadow - Doesn't solve color visibility
+- ❌ Change background color - Deep teal is part of design system
+- ✅ Remove filters - Shows original logo as intended
+
+### Future Enhancements
+
+**Potential Improvements:**
+1. Add logo variants for different backgrounds (light/dark modes)
+2. Implement SVG color theming with CSS custom properties
+3. Create animated logo transitions between color schemes
+4. Add logo size variants for different screen sizes
+
+### Related Documentation
+
+- [UI Design System - Deep OKLCH Color Implementation](#ui-design-system---deep-oklch-color-implementation) (line 9819)
+- [Header and Footer Background Color Redesign](#header-and-footer-background-color-redesign-january-2025) (line 9340)
+- [Deep Teal + Coral Color Scheme](#deep-teal--coral-color-scheme-january-2025) (line 10362+)
+
+---
+
+**Last Updated:** 2025-01-12
+**Issue:** Logo visibility on deep teal background
+**Fix:** Removed `brightness-0 invert` CSS filters
+**Test Status:** ✅ All checks passing
+**Build Status:** ✅ Production build successful (33/33 routes)
 
 ---
 

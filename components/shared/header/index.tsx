@@ -33,7 +33,7 @@ const Header = async () => {
                     height={48}
                     width={48}
                     priority={true}
-                    className="relative transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 brightness-0 invert"
+                    className="relative transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
                   />
                 </div>
                 <div className="hidden lg:block">
