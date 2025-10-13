@@ -687,6 +687,61 @@ Step 4: Success (/checkout/success)
 
 ### Common Configuration Issues & Solutions
 
+#### Price Validation Regex Bug (January 2025) - ✅ FIXED
+
+**Error:** Form shows "Price must have exactly two decimal places" even when entering correct format like "56.00"
+
+**Root Cause:** The currency validation regex in `lib/validators.ts` had syntax errors:
+```typescript
+// ❌ WRONG - spaces in regex
+/^\d+(\.\d{2}) ? $/
+```
+
+Issues:
+1. Space before `?` → `(\.\d{2}) ?` invalid syntax
+2. Space before `$` → `? $` invalid syntax
+3. Unnecessary complexity - converting string → number → formatted string
+
+**Solution:**
+Simplified the regex to test the raw input string directly:
+
+```typescript
+// ✅ CORRECT - clean regex
+const currency = z
+  .string()
+  .refine(
+    (value) => /^\d+\.\d{2}$/.test(value),
+    'Price must have exactly two decimal places'
+  );
+```
+
+**Regex Breakdown:**
+- `^\d+` - One or more digits at the start
+- `\.` - A literal decimal point (escaped)
+- `\d{2}` - Exactly two digits
+- `$` - End of string
+
+**Valid Formats:**
+- ✅ `56.00` - Correct
+- ✅ `123.45` - Correct
+- ✅ `0.99` - Correct
+
+**Invalid Formats:**
+- ❌ `56` - No decimal point
+- ❌ `56.0` - Only 1 decimal place
+- ❌ `56.123` - 3 decimal places
+
+**Verification:**
+- ✅ TypeScript: No errors
+- ✅ ESLint: No warnings
+- ✅ Production build: All 33 routes compiled
+- ✅ Removed unused `formatNumberWithDecimal` import
+
+**Files Modified:**
+- `lib/validators.ts` - Fixed currency validation regex (line 7-12)
+
+---
+
 #### UploadThing v7 Token Format & Region Configuration (January 2025) - ✅ FIXED
 
 **Errors Encountered:**
