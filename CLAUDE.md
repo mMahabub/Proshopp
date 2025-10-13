@@ -687,11 +687,15 @@ Step 4: Success (/checkout/success)
 
 ### Common Configuration Issues & Solutions
 
-#### UploadThing v7 Token Format (January 2025) - ✅ FIXED
+#### UploadThing v7 Token Format & Region Configuration (January 2025) - ✅ FIXED
 
-**Error:** `Invalid token. A token is a base64 encoded JSON object matching { apiKey: string, appId: string, regions: string[] }`
+**Errors Encountered:**
+1. `Invalid token. A token is a base64 encoded JSON object matching { apiKey: string, appId: string, regions: string[] }`
+2. `ERR_NAME_NOT_RESOLVED` for `us-east-1.ingest.uploadthing.com`
 
-**Root Cause:** UploadThing v7+ requires a **base64-encoded JSON token** instead of the raw API key used in v6.
+**Root Cause:**
+1. UploadThing v7+ requires a **base64-encoded JSON token** instead of the raw API key used in v6
+2. UploadThing uses **custom region aliases** (not AWS region names like "us-east-1")
 
 **Why We Can't Downgrade to v6:**
 - UploadThing v6 only supports React 17-18
@@ -702,15 +706,35 @@ Step 4: Success (/checkout/success)
   npm error Found: react@19.2.0
   ```
 
-**Solution - Create v7 Token:**
+**UploadThing v7 Region Aliases:**
 
-1. **Generate base64-encoded token:**
+UploadThing does NOT use AWS region names. Instead, it uses custom region aliases:
+- **`sea1`** - US-East (Virginia) - Primary US region
+- **`fra1`** - Europe (Frankfurt) - European region
+- **`bom1`** - Asia (Mumbai) - Asian region
+- **Default** - AWS us-west-2 (if region not specified)
+
+**DNS Resolution Proof:**
+```bash
+# ❌ WRONG - AWS region name (DNS fails)
+$ nslookup us-east-1.ingest.uploadthing.com
+** server can't find us-east-1.ingest.uploadthing.com: NXDOMAIN
+
+# ✅ CORRECT - UploadThing region alias (DNS succeeds)
+$ nslookup sea1.ingest.uploadthing.com
+Name: sea1.ingest.uploadthing.com
+Address: 54.148.198.73, 44.241.119.135
+```
+
+**Solution - Create Corrected v7 Token:**
+
+1. **Generate base64-encoded token with CORRECT region alias:**
    ```bash
    node -e "
    const token = {
      apiKey: 'sk_live_your_api_key_here',
      appId: 'your_app_id_here',
-     regions: ['us-east-1']
+     regions: ['sea1']  // ✅ Use UploadThing region alias, NOT 'us-east-1'
    };
    const base64Token = Buffer.from(JSON.stringify(token)).toString('base64');
    console.log('Base64 Token:', base64Token);
@@ -721,7 +745,8 @@ Step 4: Success (/checkout/success)
    ```env
    # UploadThing v7+ requires a base64-encoded JSON token:
    # Format: base64({apiKey: string, appId: string, regions: string[]})
-   UPLOADTHING_TOKEN='eyJhcGlLZXkiOiJza19saXZlX2M4ODhkMjJjNjUwZmMwZjQ4ZDE1Y2JlYWQyMjM5MDRhOTFjODhjNmFhZTQ1MmJiMmUxMmJiNjI5ZjQ1NDQ4NWIiLCJhcHBJZCI6InluNjRiam1rczgiLCJyZWdpb25zIjpbInVzLWVhc3QtMSJdfQ=='
+   # Valid region aliases: 'sea1' (US-East), 'fra1' (Europe), 'bom1' (Asia)
+   UPLOADTHING_TOKEN='eyJhcGlLZXkiOiJza19saXZlX2M4ODhkMjJjNjUwZmMwZjQ4ZDE1Y2JlYWQyMjM5MDRhOTFjODhjNmFhZTQ1MmJiMmUxMmJiNjI5ZjQ1NDQ4NWIiLCJhcHBJZCI6InluNjRiam1rczgiLCJyZWdpb25zIjpbInNlYTEiXX0='
    UPLOADTHING_SECRET='sk_live_your_api_key'  # Keep for backward compatibility
    UPLOADTHING_APP_ID='your_app_id'
    ```
@@ -743,22 +768,31 @@ Step 4: Success (/checkout/success)
   {
     "apiKey": "sk_live_xxx",
     "appId": "your_app_id",
-    "regions": ["us-east-1"]
+    "regions": ["sea1"]  // ✅ Must use UploadThing region aliases
   }
   ```
 
+**Common Mistakes:**
+- ❌ Using AWS region names: `"us-east-1"`, `"us-west-2"`, `"eu-west-1"`
+- ✅ Using UploadThing aliases: `"sea1"`, `"fra1"`, `"bom1"`
+
 **Verification:**
+- ✅ DNS resolution: `sea1.ingest.uploadthing.com` → `54.148.198.73, 44.241.119.135`
 - ✅ Production build successful (all 33 routes compiled)
 - ✅ No TypeScript errors
 - ✅ No ESLint warnings
-- ✅ Token format: base64-encoded JSON with apiKey, appId, regions
+- ✅ Token format: base64-encoded JSON with apiKey, appId, correct region alias
 - ✅ Navigate to `/admin/products/add` and test image upload
 
 **Related Files:**
-- `.env` - Environment variables with v7 token
+- `.env` - Environment variables with corrected v7 token
 - `lib/uploadthing.ts` - File router configuration (unchanged)
 - `app/api/uploadthing/route.ts` - API handlers (unchanged)
 - `package.json` - Using UploadThing v7.7.4 with React 19.2.0
+
+**Documentation References:**
+- [UploadThing v7 Migration Guide](https://docs.uploadthing.com/v7)
+- [UploadThing Regions & ACL](https://docs.uploadthing.com/concepts/regions-acl)
 
 ### Upcoming Architecture Additions
 
