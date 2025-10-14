@@ -36,9 +36,12 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">
-        Shopping Cart ({itemCount} {itemCount === 1 ? 'item' : 'items'})
-      </h1>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Shopping Cart</h1>
+        <p className="text-gray-600 mt-2">
+          {items.length} {items.length === 1 ? 'product' : 'products'} • {itemCount} total {itemCount === 1 ? 'item' : 'items'}
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}

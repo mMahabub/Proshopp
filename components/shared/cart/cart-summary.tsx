@@ -1,9 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/lib/store/cart-store'
-import { ShoppingBag, ArrowRight } from 'lucide-react'
+import { clearCart } from '@/lib/actions/cart.actions'
+import { useSession } from 'next-auth/react'
+import { toast } from 'sonner'
+import { ShoppingBag, ArrowRight, Trash2 } from 'lucide-react'
 
 const TAX_RATE = 0.08 // 8% tax
 
@@ -18,11 +22,46 @@ function formatCurrency(amount: number): string {
 
 export default function CartSummary() {
   const router = useRouter()
-  const { getTotal } = useCartStore()
+  const { getTotal, clearCart: clearLocalCart } = useCartStore()
+  const { data: session } = useSession()
+  const [isClearing, setIsClearing] = useState(false)
 
   const subtotal = getTotal()
   const tax = subtotal * TAX_RATE
   const total = subtotal + tax
+
+  const handleClearCart = async () => {
+    if (!confirm('Are you sure you want to remove all items from your cart?')) {
+      return
+    }
+
+    try {
+      setIsClearing(true)
+
+      // Clear local cart (localStorage)
+      clearLocalCart()
+
+      // Clear database cart if user is authenticated
+      if (session?.user) {
+        const result = await clearCart()
+        if (result.success) {
+          toast.success('Cart cleared successfully')
+        } else {
+          toast.error(result.message || 'Failed to clear cart')
+        }
+      } else {
+        toast.success('Cart cleared successfully')
+      }
+
+      // Refresh the page to update UI
+      router.refresh()
+    } catch (error) {
+      toast.error('Failed to clear cart')
+      console.error('Clear cart error:', error)
+    } finally {
+      setIsClearing(false)
+    }
+  }
 
   return (
     <div className="bg-gray-50 rounded-lg p-6 space-y-4">
@@ -75,6 +114,19 @@ export default function CartSummary() {
       <p className="text-xs text-gray-500 text-center pt-4">
         Shipping calculated at checkout
       </p>
+
+      {/* Clear Cart Button */}
+      <div className="border-t border-gray-300 pt-4 mt-4">
+        <Button
+          onClick={handleClearCart}
+          disabled={isClearing}
+          variant="ghost"
+          className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          {isClearing ? 'Clearing...' : 'Clear Cart'}
+        </Button>
+      </div>
     </div>
   )
 }
