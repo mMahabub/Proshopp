@@ -48,7 +48,7 @@ const Menu = async () => {
       {/* Mobile Navigation */}
       <nav className="md:hidden">
         <Sheet>
-          <SheetTrigger className="align-middle hover:bg-white/20 transition-all duration-200 rounded-full p-2 text-white">
+          <SheetTrigger className="align-middle hover:bg-[#88BDBC]/20 transition-all duration-200 rounded-full p-2 text-[#88BDBC]">
             <EllipsisVertical className="w-6 h-6" />
           </SheetTrigger>
           <SheetContent className="flex flex-col items-start gap-4 p-4 bg-white rounded-lg">

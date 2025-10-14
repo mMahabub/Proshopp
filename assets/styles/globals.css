@@ -54,32 +54,32 @@
 
 @layer base {
   :root {
-    /* Off-white/light gray background (#f8f9fa) */
-    --background: 210 20% 98%;
-    --foreground: 210 30% 20%;
+    /* Pure White Background - Clean, professional */
+    --background: 0 0% 100%;
+    --foreground: 39 10% 28%; /* Earth Brown (#4F4A41) for body text */
 
-    /* Card with off-white */
-    --card: 210 20% 99%;
-    --card-foreground: 210 30% 20%;
+    /* White Cards with subtle shadow */
+    --card: 0 0% 100%;
+    --card-foreground: 39 10% 28%; /* Earth Brown text on cards */
 
     /* Popover */
-    --popover: 210 20% 99%;
-    --popover-foreground: 210 30% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 39 10% 28%;
 
-    /* Primary: Coral (#ff6b6b) */
-    --primary: 0 100% 71%;
+    /* Deep Teal (#254E58) - Primary CTAs */
+    --primary: 192 41% 25%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary: Elegant purple (kept for contrast) */
-    --secondary: 262 83% 58%;
+    /* Teal Mist (#88BDBC) - Secondary CTAs and accents */
+    --secondary: 178 30% 64%;
     --secondary-foreground: 0 0% 100%;
 
-    /* Muted: Light gray backgrounds */
-    --muted: 220 13% 95%;
-    --muted-foreground: 220 9% 46%;
+    /* Stone Gray (#6E6658) - Secondary text, metadata */
+    --muted: 38 11% 39%;
+    --muted-foreground: 38 11% 39%; /* Stone Gray for secondary text */
 
-    /* Accent: Coral accent (#ff6b6b) */
-    --accent: 0 100% 71%;
+    /* Teal Mist (#88BDBC) - Accent borders, highlights */
+    --accent: 178 30% 64%;
     --accent-foreground: 0 0% 100%;
 
     /* Destructive: Modern rose */
@@ -94,17 +94,17 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    /* Borders and inputs */
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 0 100% 71%;
+    /* Teal Mist borders for cards/sections */
+    --border: 178 30% 64%;
+    --input: 178 30% 64%;
+    --ring: 178 30% 64%;
 
-    /* Modern chart colors */
-    --chart-1: 0 100% 71%;
-    --chart-2: 262 83% 58%;
-    --chart-3: 142 76% 36%;
-    --chart-4: 38 92% 50%;
-    --chart-5: 350 89% 60%;
+    /* Modern chart colors with teal/earth palette */
+    --chart-1: 192 41% 25%; /* Deep Teal */
+    --chart-2: 189 49% 13%; /* Midnight Teal */
+    --chart-3: 178 30% 64%; /* Teal Mist */
+    --chart-4: 142 76% 36%; /* Success Green */
+    --chart-5: 38 92% 50%;  /* Warning Amber */
 
     /* Modern border radius */
     --radius: 0.75rem;

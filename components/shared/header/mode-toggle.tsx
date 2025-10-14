@@ -24,7 +24,7 @@ const MoodToggle = () => {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant='ghost' className="focus-visible:ring-0 focus-visible:ring-offset-0 text-white hover:bg-white/20">
+                <Button variant='ghost' className="focus-visible:ring-0 focus-visible:ring-offset-0 text-[#88BDBC] hover:bg-[#88BDBC]/20">
                     {currentTheme === 'system' ? (
                         <SunMoon />
                     ) : currentTheme === 'dark' ? (

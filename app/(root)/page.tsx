@@ -14,73 +14,109 @@ const Homepage = async () => {
   return (
     <>
       <ErrorHandler />
-      {/* Animated Shopping Scene */}
+
+      {/* Full-Screen Animated Shopping Scene */}
       <AnimatedShoppingScene />
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 py-20 mb-16 rounded-2xl border border-border/40">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-        <div className="relative wrapper text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold mb-4">
-            <Zap className="w-4 h-4" />
-            <span>New Arrivals Every Week</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight">
-            Discover Premium Products
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Shop the latest collection of high-quality products at unbeatable prices. Your satisfaction is our priority.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center pt-4">
-            <Button size="lg" className="gap-2" asChild>
-              <Link href="#products">
-                <ShoppingBag className="w-5 h-5" />
-                Shop Now
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/search">Browse All Products</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
 
-      {/* Featured Products Carousel */}
-      <ProductCarousel products={featuredProducts} />
+      {/* Main Content Wrapper with Professional Spacing */}
+      <div className="wrapper space-y-24 py-16">
 
-      {/* Features Section */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-        <div className="flex items-start gap-4 p-6 rounded-xl bg-card border border-border/40 hover:border-primary/30 hover:shadow-medium transition-all duration-300">
-          <div className="p-3 rounded-lg bg-primary/10 text-primary">
-            <Truck className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg mb-1">Free Shipping</h3>
-            <p className="text-sm text-muted-foreground">On orders over $50</p>
-          </div>
-        </div>
-        <div className="flex items-start gap-4 p-6 rounded-xl bg-card border border-border/40 hover:border-secondary/30 hover:shadow-medium transition-all duration-300">
-          <div className="p-3 rounded-lg bg-secondary/10 text-secondary">
-            <Shield className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg mb-1">Secure Payment</h3>
-            <p className="text-sm text-muted-foreground">100% secure transactions</p>
-          </div>
-        </div>
-        <div className="flex items-start gap-4 p-6 rounded-xl bg-card border border-border/40 hover:border-accent/30 hover:shadow-medium transition-all duration-300">
-          <div className="p-3 rounded-lg bg-accent/10 text-accent">
-            <Zap className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-lg mb-1">Fast Delivery</h3>
-            <p className="text-sm text-muted-foreground">2-3 business days</p>
-          </div>
-        </div>
-      </section>
+        {/* Hero Section - Removed, content now integrated in animated scene */}
 
-      {/* Products Section */}
-      <div id="products">
-        <ProductList data={latestProducts} title="Newest Arrivals" limit={4} />
+        {/* Features Section - Enhanced Professional Design */}
+        <section className="space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Why Choose Us
+            </h2>
+            <div className="h-1 w-24 bg-gradient-to-r from-primary via-secondary to-accent rounded-full mx-auto" />
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Experience premium service with every purchase
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="group flex flex-col items-center text-center gap-4 p-8 rounded-2xl bg-white border-2 border-[#88BDBC]/40 hover:border-[#88BDBC] hover:shadow-[0_8px_30px_rgba(136,189,188,0.25)] transition-all duration-300 hover:-translate-y-1">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#254E58]/10 to-[#254E58]/5 text-[#254E58] group-hover:scale-110 transition-transform duration-300">
+                <Truck className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-xl text-[#254E58]">Free Shipping</h3>
+                <p className="text-[#6E6658]">On orders over $50</p>
+              </div>
+            </div>
+
+            <div className="group flex flex-col items-center text-center gap-4 p-8 rounded-2xl bg-white border-2 border-[#88BDBC]/40 hover:border-[#88BDBC] hover:shadow-[0_8px_30px_rgba(136,189,188,0.25)] transition-all duration-300 hover:-translate-y-1">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#88BDBC]/10 to-[#88BDBC]/5 text-[#88BDBC] group-hover:scale-110 transition-transform duration-300">
+                <Shield className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-xl text-[#254E58]">Secure Payment</h3>
+                <p className="text-[#6E6658]">100% secure transactions</p>
+              </div>
+            </div>
+
+            <div className="group flex flex-col items-center text-center gap-4 p-8 rounded-2xl bg-white border-2 border-[#88BDBC]/40 hover:border-[#88BDBC] hover:shadow-[0_8px_30px_rgba(136,189,188,0.25)] transition-all duration-300 hover:-translate-y-1">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-[#88BDBC]/10 to-[#88BDBC]/5 text-[#88BDBC] group-hover:scale-110 transition-transform duration-300">
+                <Zap className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-xl text-[#254E58]">Fast Delivery</h3>
+                <p className="text-[#6E6658]">2-3 business days</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Products Carousel Section */}
+        <section className="space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Featured Products
+            </h2>
+            <div className="h-1 w-24 bg-gradient-to-r from-primary via-secondary to-accent rounded-full mx-auto" />
+          </div>
+          <ProductCarousel products={featuredProducts} />
+        </section>
+
+        {/* Products Section with Enhanced Styling */}
+        <section id="products" className="space-y-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Newest Arrivals
+            </h2>
+            <div className="h-1 w-24 bg-gradient-to-r from-primary via-secondary to-accent rounded-full mx-auto" />
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Discover our latest collection of premium products
+            </p>
+          </div>
+          <ProductList data={latestProducts} title="" limit={4} />
+        </section>
+
+        {/* Call to Action Section */}
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 p-12 md:p-16 border border-border/40">
+          <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+          <div className="relative text-center space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-semibold">
+              <Zap className="w-4 h-4" />
+              <span>New Arrivals Every Week</span>
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent leading-tight">
+              Ready to Start Shopping?
+            </h2>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+              Join thousands of satisfied customers and discover our premium collection
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center pt-4">
+              <Button size="lg" className="gap-2" asChild>
+                <Link href="/search">
+                  <ShoppingBag className="w-5 h-5" />
+                  Browse All Products
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
       </div>
     </>
   );

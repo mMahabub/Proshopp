@@ -14,9 +14,9 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, featured = false }: ProductCardProps) => {
   return (
-    <Card className="group relative w-full max-w-sm border-2 border-border/40 hover:border-primary/50 hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)] transition-all duration-300 overflow-hidden bg-gradient-to-br from-card via-card to-muted/20">
-      {/* Decorative gradient overlay on card */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+    <Card className="group relative w-full max-w-sm border-2 border-[#88BDBC]/40 hover:border-[#88BDBC] hover:shadow-[0_8px_30px_rgba(136,189,188,0.25)] transition-all duration-300 overflow-hidden bg-white">
+      {/* Decorative Teal Mist overlay on card */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#88BDBC]/5 via-[#254E58]/5 to-[#88BDBC]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
       <CardHeader className="p-0 items-center relative overflow-hidden">
         <Link href={`/product/${product.slug || ""}`} className="relative block w-full">

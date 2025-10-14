@@ -105,7 +105,7 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
 
     return (
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-3">
+        <h3 className="text-sm font-semibold text-[#88BDBC]/60 uppercase tracking-wider px-3">
           {title}
         </h3>
         <div className="space-y-1">
@@ -121,8 +121,8 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   active
-                    ? 'bg-[#1e2936] text-white'
-                    : 'text-gray-200 hover:bg-[#1e2936]/50 hover:text-white'
+                    ? 'bg-[#254E58] text-white'
+                    : 'text-[#88BDBC] hover:bg-[#254E58]/50 hover:text-white'
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -141,21 +141,21 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="text-white hover:bg-white/20"
+          className="text-[#88BDBC] hover:bg-[#88BDBC]/20"
           aria-label="Open navigation menu"
         >
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 overflow-y-auto bg-[#2c3e50] text-white">
+      <SheetContent side="left" className="w-80 overflow-y-auto bg-[#112D32] text-white">
         <SheetHeader>
-          <SheetTitle className="text-left">Navigation</SheetTitle>
+          <SheetTitle className="text-left text-[#88BDBC]">Navigation</SheetTitle>
           {user && (
-            <div className="text-left pt-2 pb-4 border-b">
-              <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-gray-400">{user.email}</p>
+            <div className="text-left pt-2 pb-4 border-b border-[#88BDBC]/20">
+              <p className="text-sm font-medium text-[#88BDBC]">{user.name}</p>
+              <p className="text-xs text-[#88BDBC]/60">{user.email}</p>
               {user.role === 'admin' && (
-                <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold bg-[#1e2936] text-white rounded">
+                <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold bg-[#254E58] text-white rounded">
                   Admin
                 </span>
               )}
@@ -170,8 +170,8 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
           {user?.role === 'admin' && renderLinks(adminLinks, 'Admin Panel')}
         </div>
 
-        <div className="mt-8 pt-6 border-t">
-          <p className="text-xs text-gray-400 text-center">
+        <div className="mt-8 pt-6 border-t border-[#88BDBC]/20">
+          <p className="text-xs text-[#88BDBC]/60 text-center">
             © 2025 Proshopp. All rights reserved.
           </p>
         </div>
