@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ShoppingBag, Zap, Shield, Truck } from "lucide-react";
 import Link from "next/link";
 import ErrorHandler from "@/components/shared/error-handler";
+import AnimatedShoppingScene from "@/components/shared/animated-shopping-scene";
 
 const Homepage = async () => {
   const latestProducts = await getLatestProducts();
@@ -13,6 +14,8 @@ const Homepage = async () => {
   return (
     <>
       <ErrorHandler />
+      {/* Animated Shopping Scene */}
+      <AnimatedShoppingScene />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 py-20 mb-16 rounded-2xl border border-border/40">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
