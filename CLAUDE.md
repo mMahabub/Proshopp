@@ -203,7 +203,7 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
 - **Components**: shadcn/ui with class-variance-authority
 - **Utilities**: `cn()` for className merging
 
-### Color Palette (Updated: January 2025 - Deep Navy & Burgundy Theme)
+### Color Palette (Updated: January 2025 - Slate Blue & Ocean Theme)
 **Primary Colors:**
 - Primary (Coral): `hsl(0 100% 71%)` / `#ff6b6b` - Vibrant accent color maintained from previous theme
 - Secondary (Purple): `hsl(262 83% 58%)` - Elegant contrast color (maintained for visual variety)
@@ -212,54 +212,56 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
 - Warning (Amber): `hsl(38 92% 50%)` - Alerts
 
 **Body/Background:**
-- Background: `hsl(183 13% 80%)` / `#c7d0ce` - Soft gray-blue for calm, professional reading environment
-- Foreground: `hsl(199 100% 15%)` - Deep teal-blue text for excellent contrast and readability
-- Card: `hsl(183 13% 85%)` - Lighter gray-blue cards for subtle elevation
-- Popover: `hsl(183 13% 85%)` - Matches card background
+- Background: `hsl(222 24% 87%)` / `#d0d5e2` - Pale blue-gray for clean, modern reading environment
+- Foreground: `hsl(210 30% 20%)` - Deep blue-gray text for excellent contrast and readability
+- Card: `hsl(222 24% 90%)` - Lighter pale blue-gray cards for subtle elevation
+- Popover: `hsl(222 24% 90%)` - Matches card background
 
 **Header:**
-- Background: `#052636` - Deep navy blue for sophisticated, professional appearance
-- Gradient Overlay: Purple-navy (`#2f2842`) at 10% opacity for depth
-- Gradient Line: Horizontal gradient from `#2f2842` → `#5a1011` → `#2f2842` (purple-navy to burgundy accent)
+- Background: `#1c404e` - Deep slate blue for sophisticated, professional appearance
+- Gradient Overlay: Ocean blue (`#0c5b82`) at 10% and 5% opacity for depth
+- Gradient Line: Horizontal gradient from `#0c5b82` → `#2d373d` → `#0c5b82` (ocean blue to charcoal accent)
 - Text: White (`#FFFFFF`) for headings and navigation
 - Borders: Semi-transparent white (`border-white/10`)
 - Hover States: `hover:bg-white/20` for buttons and links
 - **Accessibility**: WCAG 2.1 AA compliant (contrast ratio > 7:1)
 
 **Footer:**
-- Background: `#5a1011` - Deep burgundy for rich, grounded footer
-- Gradient Overlay: Mixed purple-navy and navy (`#2f2842`, `#052636`) at 10% and 5% opacity
-- Gradient Line: Horizontal gradient from `#2f2842` → `#052636` → `#2f2842` (coordinating with header)
+- Background: `#2d373d` - Charcoal gray for modern, grounded footer
+- Gradient Overlay: Ocean blue and slate blue (`#0c5b82`, `#1c404e`) at 10% and 5% opacity
+- Gradient Line: Horizontal gradient from `#0c5b82` → `#1c404e` → `#0c5b82` (coordinating with header)
 - Text: White (`#FFFFFF`) for headings, Gray-300 (`#D1D5DB`) for body text
 - Borders: Semi-transparent white (`border-white/10`, `border-white/20`)
 - Hover States: Color-coded hover effects on social icons
 - **Accessibility**: WCAG 2.1 AA compliant (contrast ratio > 7:1)
 
 **Navigation Drawer:**
-- Background: `#2f2842` - Dark purple-navy for consistent navigation experience
+- Background: `#0c5b82` - Ocean blue for vibrant, consistent navigation experience
 - Text: White (`#FFFFFF`) for primary text, Gray-200 for secondary
-- Active State: `#052636` (deep navy) background with white text
-- Hover State: `#052636` at 50% opacity
+- Active State: `#1c404e` (deep slate blue) background with white text
+- Hover State: `#1c404e` at 50% opacity
 - Borders: White at 10-20% opacity for subtle separation
 
 **Color Philosophy:**
-- **Deep Navy** (`#052636`): Professional, trustworthy, modern - perfect for header
-- **Purple-Navy** (`#2f2842`): Rich, sophisticated - ideal for navigation and accents
-- **Gray-Blue** (`#c7d0ce`): Calm, professional - excellent for reading and content areas
-- **Deep Burgundy** (`#5a1011`): Grounded, luxurious - creates strong footer presence
-- **Rationale**: Cool tones create professional atmosphere while maintaining visual interest through color variation
-- **Implementation**: Direct hex values in Tailwind arbitrary classes: `bg-[#052636]`, `bg-[#2f2842]`, `bg-[#5a1011]`
-- **Gradients**: Strategic use of purple-navy and burgundy in gradient overlays ties color scheme together
+- **Deep Slate Blue** (`#1c404e`): Professional, trustworthy, modern - perfect for header
+- **Ocean Blue** (`#0c5b82`): Vibrant, engaging - ideal for navigation and interactive elements
+- **Pale Blue-Gray** (`#d0d5e2`): Clean, professional - excellent for reading and content areas
+- **Charcoal Gray** (`#2d373d`): Modern, grounded - creates strong footer presence
+- **Rationale**: Cool ocean tones create professional atmosphere while maintaining visual energy through bright blue accents
+- **Implementation**: Direct hex values in Tailwind arbitrary classes: `bg-[#1c404e]`, `bg-[#0c5b82]`, `bg-[#2d373d]`
+- **Gradients**: Strategic use of ocean blue and slate blue in gradient overlays creates cohesive color flow
 
 **Color Evolution:**
 1. **Original**: Deep OKLCH blue `oklch(39.8% 0.07 227.392)` - Modern perceptual color space
 2. **First Update**: Navy blue `#1e3a5f` with bright blue accents `#007bff` - Professional theme
 3. **Second Update**: Deep gray `#333333` with gold accents `#d4af37` - Warm, sophisticated theme
-4. **Current**: Deep navy `#052636`, purple-navy `#2f2842`, gray-blue body `#c7d0ce`, burgundy footer `#5a1011`
-   - Professional and trustworthy with navy tones
-   - Visual interest through complementary purple-navy and burgundy accents
-   - Calm content area with gray-blue background
+4. **Third Update**: Deep navy `#052636`, purple-navy `#2f2842`, gray-blue body `#c7d0ce`, burgundy footer `#5a1011`
+5. **Current**: Deep slate blue `#1c404e`, ocean blue `#0c5b82`, pale blue-gray body `#d0d5e2`, charcoal footer `#2d373d`
+   - Professional and trustworthy with slate tones
+   - Visual energy through vibrant ocean blue accents
+   - Clean, modern content area with pale blue-gray background
    - Strong hierarchical structure through distinct section colors
+   - Cohesive blue color family creates unified design system
 
 ### Shadow System
 - Soft: `0 2px 8px rgba(0,0,0,0.04)`

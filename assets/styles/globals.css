@@ -54,17 +54,17 @@
 
 @layer base {
   :root {
-    /* Soft gray-blue background (#c7d0ce) */
-    --background: 183 13% 80%;
-    --foreground: 199 100% 15%;
+    /* Pale blue-gray background (#d0d5e2) */
+    --background: 222 24% 87%;
+    --foreground: 210 30% 20%;
 
-    /* Card with soft gray-blue */
-    --card: 183 13% 85%;
-    --card-foreground: 199 100% 15%;
+    /* Card with pale blue-gray */
+    --card: 222 24% 90%;
+    --card-foreground: 210 30% 20%;
 
     /* Popover */
-    --popover: 183 13% 85%;
-    --popover-foreground: 199 100% 15%;
+    --popover: 222 24% 90%;
+    --popover-foreground: 210 30% 20%;
 
     /* Primary: Coral (#ff6b6b) */
     --primary: 0 100% 71%;

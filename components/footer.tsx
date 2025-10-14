@@ -5,11 +5,11 @@ import Link from 'next/link';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="relative border-t-2 border-white/10 bg-[#5a1011] mt-24">
+    <footer className="relative border-t-2 border-white/10 bg-[#2d373d] mt-24">
       {/* Decorative gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#2f2842]/10 via-[#052636]/5 to-[#2f2842]/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0c5b82]/10 via-[#1c404e]/5 to-[#0c5b82]/10 pointer-events-none" />
 
-      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-[#2f2842] via-[#052636] to-[#2f2842]" />
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-[#0c5b82] via-[#1c404e] to-[#0c5b82]" />
 
       <div className="container mx-auto px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
