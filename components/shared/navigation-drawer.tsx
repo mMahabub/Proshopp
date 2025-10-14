@@ -121,8 +121,8 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   active
-                    ? 'bg-[#1c404e] text-white'
-                    : 'text-gray-200 hover:bg-[#1c404e]/50 hover:text-white'
+                    ? 'bg-[#1e2936] text-white'
+                    : 'text-gray-200 hover:bg-[#1e2936]/50 hover:text-white'
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -147,7 +147,7 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 overflow-y-auto bg-[#0c5b82] text-white">
+      <SheetContent side="left" className="w-80 overflow-y-auto bg-[#2c3e50] text-white">
         <SheetHeader>
           <SheetTitle className="text-left">Navigation</SheetTitle>
           {user && (
@@ -155,7 +155,7 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
               <p className="text-sm font-medium">{user.name}</p>
               <p className="text-xs text-gray-400">{user.email}</p>
               {user.role === 'admin' && (
-                <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold bg-[#1c404e] text-white rounded">
+                <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold bg-[#1e2936] text-white rounded">
                   Admin
                 </span>
               )}
