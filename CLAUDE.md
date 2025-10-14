@@ -203,7 +203,7 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
 - **Components**: shadcn/ui with class-variance-authority
 - **Utilities**: `cn()` for className merging
 
-### Color Palette (Updated: January 2025 - White Header & Midnight Blue Theme)
+### Color Palette (Updated: January 2025 - Dark Navy Header & Midnight Blue Theme)
 **Primary Colors:**
 - Primary (Bright Blue): `#0066ff` - Vibrant primary accent for interactive elements
 - Secondary (Teal/Turquoise): `#00d4aa` - Fresh secondary accent for variety
@@ -218,14 +218,14 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
 - Popover: `hsl(210 20% 99%)` - Matches card background
 
 **Header:**
-- Background: `#ffffff` - Pure white for modern, clean appearance with subtle shadow
-- Shadow: `0 2px 8px rgba(0,0,0,0.08)` - Subtle depth without heaviness
-- Gradient Overlay: Bright blue and teal (`#0066ff`, `#00d4aa`) at 3% opacity for brand presence
+- Background: `#1a1a2e` - Dark navy for sophisticated, professional appearance
+- Shadow: `0 2px 20px rgba(0,0,0,0.3)` - Strong depth with dark theme
+- Gradient Overlay: Bright blue and teal (`#0066ff`, `#00d4aa`) at 10% and 5% opacity for vibrant accent
 - Gradient Line: Horizontal gradient from `#0066ff` → `#00d4aa` → `#0066ff` (vibrant accent line)
-- Text: Dark foreground for excellent contrast
-- Borders: Light gray (`border-gray-200`)
-- Hover States: Light hover effects on interactive elements
-- **Accessibility**: WCAG 2.1 AAA compliant (contrast ratio > 7:1 for dark text on white)
+- Text: White (`#FFFFFF`) for headings and navigation
+- Borders: Semi-transparent white (`border-white/10`)
+- Hover States: `hover:bg-white/20` for buttons and links
+- **Accessibility**: WCAG 2.1 AA compliant (contrast ratio > 7:1 for white text on dark navy)
 
 **Footer:**
 - Background: `#2c3e50` - Midnight blue for professional, grounded footer
@@ -244,14 +244,14 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
 - Borders: White at 10-20% opacity for subtle separation
 
 **Color Philosophy:**
-- **Pure White Header** (`#ffffff`): Modern, clean, professional - maximizes content focus with bright, open feel
+- **Dark Navy Header** (`#1a1a2e`): Sophisticated, professional, commanding - creates strong visual hierarchy
 - **Midnight Blue** (`#2c3e50`): Professional, trustworthy - perfect for navigation and footer grounding
 - **Bright Blue** (`#0066ff`): Energetic, engaging - primary accent for interactive elements
 - **Teal/Turquoise** (`#00d4aa`): Fresh, modern - secondary accent for visual variety
 - **Off-White Background** (`#f8f9fa`): Clean, bright - optimal reading environment without harsh glare
-- **Rationale**: Inverted design with light header creates modern, airy feel while midnight blue footer grounds the design
-- **Implementation**: Mix of pure hex colors and HSL for flexibility: `bg-white`, `bg-[#2c3e50]`, `hsl(210 20% 98%)`
-- **Gradients**: Strategic bright blue and teal accents tie the light/dark sections together
+- **Rationale**: Dark header creates professional, bold presence while maintaining readability with bright content area
+- **Implementation**: Mix of hex colors and HSL for flexibility: `bg-[#1a1a2e]`, `bg-[#2c3e50]`, `hsl(210 20% 98%)`
+- **Gradients**: Strategic bright blue and teal accents provide vibrant energy against dark backgrounds
 
 **Color Evolution:**
 1. **Original**: Deep OKLCH blue `oklch(39.8% 0.07 227.392)` - Modern perceptual color space
@@ -259,12 +259,14 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
 3. **Second Update**: Deep gray `#333333` with gold accents `#d4af37` - Warm, sophisticated theme
 4. **Third Update**: Deep navy `#052636`, purple-navy `#2f2842`, gray-blue body `#c7d0ce`, burgundy footer `#5a1011`
 5. **Fourth Update**: Deep slate blue `#1c404e`, ocean blue `#0c5b82`, pale blue-gray body `#d0d5e2`, charcoal footer `#2d373d`
-6. **Current**: Pure white header `#ffffff`, midnight blue `#2c3e50`, off-white body `#f8f9fa`, bright blue `#0066ff`, teal `#00d4aa`
-   - Modern inverted design with light header and dark footer
-   - Vibrant bright blue and teal accents create energy and engagement
-   - Clean off-white background maximizes readability
-   - Strong contrast between header brightness and footer depth
-   - Contemporary color scheme aligned with modern web design trends
+6. **Fifth Update**: Pure white header `#ffffff`, midnight blue `#2c3e50`, off-white body `#f8f9fa`, bright blue `#0066ff`, teal `#00d4aa`
+7. **Current**: Dark navy header `#1a1a2e`, midnight blue footer/navigation `#2c3e50`, off-white body `#f8f9fa`, bright blue `#0066ff`, teal `#00d4aa`
+   - Professional dark header creates strong visual hierarchy and commanding presence
+   - Dark theme coordination between header and footer for consistency
+   - Vibrant bright blue and teal accents pop beautifully against dark backgrounds
+   - Clean off-white body maximizes content readability
+   - Strong contrast between dark navigation elements and bright content area
+   - Sophisticated, modern color scheme with professional authority
 
 ### Shadow System
 - Soft: `0 2px 8px rgba(0,0,0,0.04)`

@@ -11,9 +11,9 @@ const Header = async () => {
     const session = await auth();
 
     return (
-         <header className="w-full border-b border-gray-200 bg-white backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+         <header className="w-full border-b-2 border-white/10 bg-[#1a1a2e] backdrop-blur-lg sticky top-0 z-50 shadow-[0_2px_20px_rgba(0,0,0,0.3)]">
         {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0066ff]/3 via-[#00d4aa]/3 to-[#0066ff]/3 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0066ff]/10 via-[#00d4aa]/5 to-[#0066ff]/10 pointer-events-none" />
 
         {/* Decorative gradient line */}
         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#0066ff] via-[#00d4aa] to-[#0066ff]" />
