@@ -105,7 +105,7 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
 
     return (
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider px-3">
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider px-3">
           {title}
         </h3>
         <div className="space-y-1">
@@ -121,8 +121,8 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:bg-muted hover:text-primary'
+                    ? 'bg-[#052636] text-white'
+                    : 'text-gray-200 hover:bg-[#052636]/50 hover:text-white'
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -147,15 +147,15 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-80 overflow-y-auto">
+      <SheetContent side="left" className="w-80 overflow-y-auto bg-[#2f2842] text-white">
         <SheetHeader>
           <SheetTitle className="text-left">Navigation</SheetTitle>
           {user && (
             <div className="text-left pt-2 pb-4 border-b">
               <p className="text-sm font-medium">{user.name}</p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
+              <p className="text-xs text-gray-400">{user.email}</p>
               {user.role === 'admin' && (
-                <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold bg-primary/10 text-primary rounded">
+                <span className="inline-block mt-2 px-2 py-1 text-xs font-semibold bg-[#052636] text-white rounded">
                   Admin
                 </span>
               )}
@@ -171,7 +171,7 @@ export default function NavigationDrawer({ user }: NavigationDrawerProps) {
         </div>
 
         <div className="mt-8 pt-6 border-t">
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-xs text-gray-400 text-center">
             © 2025 Proshopp. All rights reserved.
           </p>
         </div>

@@ -203,34 +203,63 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
 - **Components**: shadcn/ui with class-variance-authority
 - **Utilities**: `cn()` for className merging
 
-### Color Palette (Updated: January 2025 - Warm Tone Theme)
+### Color Palette (Updated: January 2025 - Deep Navy & Burgundy Theme)
 **Primary Colors:**
-- Primary (Gold): `hsl(46 65% 52%)` / `#d4af37` - Elegant, premium accent color for luxury feel
+- Primary (Coral): `hsl(0 100% 71%)` / `#ff6b6b` - Vibrant accent color maintained from previous theme
 - Secondary (Purple): `hsl(262 83% 58%)` - Elegant contrast color (maintained for visual variety)
-- Accent (Gold): `hsl(46 65% 52%)` / `#d4af37` - Sophisticated highlight matching primary
+- Accent (Coral): `hsl(0 100% 71%)` / `#ff6b6b` - Consistent with primary
 - Success (Emerald): `hsl(142 76% 36%)` - Positive actions
 - Warning (Amber): `hsl(38 92% 50%)` - Alerts
 
 **Body/Background:**
-- Background: `hsl(50 100% 99%)` / `#fffef7` - Warm white for inviting, comfortable reading
-- Foreground: `hsl(222 47% 11%)` - Dark text for high contrast and readability
-- Card: `hsl(50 100% 99%)` - Warm white cards for consistent aesthetics
+- Background: `hsl(183 13% 80%)` / `#c7d0ce` - Soft gray-blue for calm, professional reading environment
+- Foreground: `hsl(199 100% 15%)` - Deep teal-blue text for excellent contrast and readability
+- Card: `hsl(183 13% 85%)` - Lighter gray-blue cards for subtle elevation
+- Popover: `hsl(183 13% 85%)` - Matches card background
 
-**Header & Footer:**
-- Background: `#333333` / `hsl(0 0% 20%)` - Deep gray for sophisticated, modern appearance
-- Gradient Overlay: Gold (`#d4af37`) at 5-10% opacity for subtle luxury brand integration
-- Gradient Line: Horizontal gradient from `#d4af37` → `#e6c147` → `#d4af37` (lighter gold midpoint)
+**Header:**
+- Background: `#052636` - Deep navy blue for sophisticated, professional appearance
+- Gradient Overlay: Purple-navy (`#2f2842`) at 10% opacity for depth
+- Gradient Line: Horizontal gradient from `#2f2842` → `#5a1011` → `#2f2842` (purple-navy to burgundy accent)
+- Text: White (`#FFFFFF`) for headings and navigation
+- Borders: Semi-transparent white (`border-white/10`)
+- Hover States: `hover:bg-white/20` for buttons and links
+- **Accessibility**: WCAG 2.1 AA compliant (contrast ratio > 7:1)
+
+**Footer:**
+- Background: `#5a1011` - Deep burgundy for rich, grounded footer
+- Gradient Overlay: Mixed purple-navy and navy (`#2f2842`, `#052636`) at 10% and 5% opacity
+- Gradient Line: Horizontal gradient from `#2f2842` → `#052636` → `#2f2842` (coordinating with header)
 - Text: White (`#FFFFFF`) for headings, Gray-300 (`#D1D5DB`) for body text
 - Borders: Semi-transparent white (`border-white/10`, `border-white/20`)
-- Hover States: `hover:bg-white/20` for buttons and links
-- **Accessibility**: WCAG 2.1 AA compliant (contrast ratio > 4.5:1)
+- Hover States: Color-coded hover effects on social icons
+- **Accessibility**: WCAG 2.1 AA compliant (contrast ratio > 7:1)
+
+**Navigation Drawer:**
+- Background: `#2f2842` - Dark purple-navy for consistent navigation experience
+- Text: White (`#FFFFFF`) for primary text, Gray-200 for secondary
+- Active State: `#052636` (deep navy) background with white text
+- Hover State: `#052636` at 50% opacity
+- Borders: White at 10-20% opacity for subtle separation
+
+**Color Philosophy:**
+- **Deep Navy** (`#052636`): Professional, trustworthy, modern - perfect for header
+- **Purple-Navy** (`#2f2842`): Rich, sophisticated - ideal for navigation and accents
+- **Gray-Blue** (`#c7d0ce`): Calm, professional - excellent for reading and content areas
+- **Deep Burgundy** (`#5a1011`): Grounded, luxurious - creates strong footer presence
+- **Rationale**: Cool tones create professional atmosphere while maintaining visual interest through color variation
+- **Implementation**: Direct hex values in Tailwind arbitrary classes: `bg-[#052636]`, `bg-[#2f2842]`, `bg-[#5a1011]`
+- **Gradients**: Strategic use of purple-navy and burgundy in gradient overlays ties color scheme together
 
 **Color Evolution:**
 1. **Original**: Deep OKLCH blue `oklch(39.8% 0.07 227.392)` - Modern perceptual color space
 2. **First Update**: Navy blue `#1e3a5f` with bright blue accents `#007bff` - Professional theme
-3. **Current**: Deep gray `#333333` with gold accents `#d4af37` - Warm, sophisticated theme
-- **Rationale**: Warm tones create inviting atmosphere, gold conveys premium quality, deep gray provides elegant contrast
-- **Implementation**: Direct hex values in Tailwind arbitrary classes: `bg-[#333333]`, `bg-[#d4af37]`
+3. **Second Update**: Deep gray `#333333` with gold accents `#d4af37` - Warm, sophisticated theme
+4. **Current**: Deep navy `#052636`, purple-navy `#2f2842`, gray-blue body `#c7d0ce`, burgundy footer `#5a1011`
+   - Professional and trustworthy with navy tones
+   - Visual interest through complementary purple-navy and burgundy accents
+   - Calm content area with gray-blue background
+   - Strong hierarchical structure through distinct section colors
 
 ### Shadow System
 - Soft: `0 2px 8px rgba(0,0,0,0.04)`
