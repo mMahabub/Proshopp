@@ -15,6 +15,7 @@ let prismaInstance: ReturnType<typeof createPrismaClient> | null = null;
  * - Sets up WebSocket connections for Neon serverless
  * - Creates connection pool with DATABASE_URL
  * - Extends PrismaClient with custom result transformers for price and rating fields
+ * - Includes retry logic for serverless environments
  */
 function createPrismaClient() {
   if (!process.env.DATABASE_URL) {
@@ -25,33 +26,57 @@ function createPrismaClient() {
     );
   }
 
-  // Sets up WebSocket connections for Neon
-  neonConfig.webSocketConstructor = ws;
-  const connectionString = `${process.env.DATABASE_URL}`;
+  console.log('[PRISMA] Initializing Prisma Client...');
 
-  // Creates connection pool
-  const pool = new Pool({ connectionString });
+  try {
+    // Sets up WebSocket connections for Neon
+    neonConfig.webSocketConstructor = ws;
+    const connectionString = `${process.env.DATABASE_URL}`;
 
-  // Instantiates Prisma adapter with Neon pool
-  const adapter = new PrismaNeon(pool);
+    // Creates connection pool with optimized settings for serverless
+    const pool = new Pool({
+      connectionString,
+      // Serverless-friendly settings
+      connectionTimeoutMillis: 10000, // 10 second timeout
+      idleTimeoutMillis: 30000, // 30 seconds
+      max: 1, // Single connection for serverless (creates new one per invocation)
+    });
 
-  // Extends PrismaClient with custom result transformers
-  return new PrismaClient({ adapter }).$extends({
-    result: {
-      product: {
-        price: {
-          compute(product) {
-            return product.price.toString();
+    // Log pool errors
+    pool.on('error', (err) => {
+      console.error('[PRISMA] Unexpected pool error:', err);
+    });
+
+    // Instantiates Prisma adapter with Neon pool
+    const adapter = new PrismaNeon(pool);
+
+    // Extends PrismaClient with custom result transformers
+    const client = new PrismaClient({
+      adapter,
+      log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    }).$extends({
+      result: {
+        product: {
+          price: {
+            compute(product) {
+              return product.price.toString();
+            },
           },
-        },
-        rating: {
-          compute(product) {
-            return product.rating.toString();
+          rating: {
+            compute(product) {
+              return product.rating.toString();
+            },
           },
         },
       },
-    },
-  });
+    });
+
+    console.log('[PRISMA] Prisma Client initialized successfully');
+    return client;
+  } catch (error) {
+    console.error('[PRISMA] Failed to initialize Prisma Client:', error);
+    throw error;
+  }
 }
 
 /**

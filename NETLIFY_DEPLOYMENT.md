@@ -296,3 +296,199 @@ Push to your GitHub repository or click **Trigger deploy** in Netlify.
 
 **Last Updated:** January 2025  
 **Version:** Next.js 15.1.7, NextAuth v5
+
+## Viewing Netlify Function Logs
+
+To diagnose authentication and database issues, you need to check the Netlify function logs:
+
+### Method 1: Real-Time Logs (Netlify Dashboard)
+
+1. Go to your [Netlify Dashboard](https://app.netlify.com)
+2. Select your site
+3. Click **Functions** in the left sidebar
+4. You'll see all serverless functions (including auth handlers)
+5. Click on **View logs** to see real-time output
+6. Try logging in while watching the logs
+7. Look for error messages starting with `[AUTH]` or `[PRISMA]`
+
+### Method 2: Netlify CLI (Local Monitoring)
+
+```bash
+# Install Netlify CLI if not already installed
+npm install -g netlify-cli
+
+# Login to Netlify
+netlify login
+
+# Link your site
+netlify link
+
+# Watch logs in real-time
+netlify logs:function --tail
+```
+
+### Understanding Log Messages
+
+The application now includes comprehensive logging:
+
+#### Successful Authentication Logs:
+```
+[PRISMA] Initializing Prisma Client...
+[PRISMA] Prisma Client initialized successfully
+[AUTH] Attempting to authenticate user: admin@example.com
+[AUTH] Authentication successful for user: admin@example.com
+```
+
+#### Database Connection Error Logs:
+```
+[PRISMA] Failed to initialize Prisma Client: Error: ...
+[AUTH] Database error during user lookup: Error: ...
+```
+
+**Action:** Verify DATABASE_URL is correctly set in Netlify environment variables
+
+#### Missing Environment Variable Logs:
+```
+Error: AUTH_SECRET is not defined in environment variables
+```
+
+**Action:** Add AUTH_SECRET to Netlify environment variables
+
+#### Invalid Credentials Logs:
+```
+[AUTH] User not found or no password set: test@example.com
+[AUTH] Invalid password for user: admin@example.com
+```
+
+**Action:** Verify you're using correct test credentials
+
+#### Email Not Verified Logs:
+```
+[AUTH] Email not verified: user@example.com
+```
+
+**Action:** Check database - user needs `emailVerified` field set
+
+## Debugging Production Issues
+
+### Step 1: Check Netlify Build Logs
+
+1. Go to **Deploys** tab
+2. Click on latest deploy
+3. Check **Deploy log** section
+4. Look for errors during:
+   - `npm install`
+   - `prisma generate` (from postinstall)
+   - `npm run build`
+
+Common build errors:
+- `Module not found: Can't resolve 'ws'` - Already fixed by lazy loading
+- `Prisma Client not generated` - Check postinstall script runs
+- `DATABASE_URL not found` - Don't worry, it's only needed at runtime
+
+### Step 2: Check Function Logs
+
+As described above, watch function logs during login attempts.
+
+### Step 3: Verify Environment Variables
+
+1. Go to **Site settings** → **Environment variables**
+2. Verify these are set:
+   - ✅ `AUTH_SECRET` - Should be a long random string
+   - ✅ `NEXTAUTH_URL` - Should match your Netlify URL exactly
+   - ✅ `DATABASE_URL` - Should be your Neon PostgreSQL connection string
+   - ✅ `NEXT_PUBLIC_SERVER_URL` - Should match your Netlify URL
+
+**Important:** After adding/changing any environment variable, you MUST redeploy!
+
+### Step 4: Test Database Connection
+
+Create a test function to verify database connectivity:
+
+```typescript
+// netlify/functions/test-db.ts
+import { prisma } from '../../db/prisma'
+
+export default async () => {
+  try {
+    const userCount = await prisma.user.count()
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        success: true,
+        userCount,
+        message: 'Database connection successful',
+      }),
+    }
+  } catch (error) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        success: false,
+        error: error.message,
+      }),
+    }
+  }
+}
+```
+
+Visit `https://your-site.netlify.app/.netlify/functions/test-db` to test.
+
+### Step 5: Common Solutions
+
+#### "Server configuration error" when logging in
+
+**Likely causes:**
+1. Missing `AUTH_SECRET` environment variable
+2. Missing `NEXTAUTH_URL` environment variable
+3. Database connection timeout
+4. User doesn't exist in database (need to seed)
+
+**Solution checklist:**
+- [ ] Verify `AUTH_SECRET` is set in Netlify
+- [ ] Verify `NEXTAUTH_URL` matches your Netlify URL exactly (no trailing slash)
+- [ ] Verify `DATABASE_URL` is correct
+- [ ] Check function logs for specific error messages
+- [ ] Verify test user exists in database (`admin@example.com`)
+
+#### Database connection timeouts
+
+**Symptoms:**
+```
+[AUTH] Database error during user lookup: Error: timeout
+[PRISMA] Unexpected pool error: connect ETIMEDOUT
+```
+
+**Possible causes:**
+1. Neon database sleeping (serverless database)
+2. Wrong DATABASE_URL
+3. Network issues
+
+**Solutions:**
+- Wake up Neon database by visiting Neon dashboard
+- Verify DATABASE_URL has `?sslmode=require`
+- Check Neon database isn't paused
+- Increase connection timeout (already set to 10 seconds)
+
+#### OAuth callback URL mismatch
+
+**Symptoms:**
+```
+Error: redirect_uri_mismatch
+```
+
+**Solution:**
+Update OAuth callback URLs in Google/GitHub to match your Netlify URL exactly.
+
+## Health Check Endpoint
+
+To verify your deployment is working, visit:
+```
+https://your-site.netlify.app
+```
+
+You should see the homepage. If you see a blank page or error, check the browser console and function logs.
+
+---
+
+**Last Updated:** January 2025 (Added comprehensive logging and debugging guide)
