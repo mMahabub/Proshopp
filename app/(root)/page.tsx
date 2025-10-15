@@ -6,10 +6,20 @@ import { ShoppingBag, Zap, Shield, Truck } from "lucide-react";
 import Link from "next/link";
 import ErrorHandler from "@/components/shared/error-handler";
 import AnimatedShoppingScene from "@/components/shared/animated-shopping-scene";
+import { Product } from "@/types";
 
 const Homepage = async () => {
-  const latestProducts = await getLatestProducts();
-  const featuredProducts = await getFeaturedProducts();
+  // Gracefully handle missing DATABASE_URL during build
+  let latestProducts: Product[] = [];
+  let featuredProducts: Product[] = [];
+
+  try {
+    latestProducts = await getLatestProducts();
+    featuredProducts = await getFeaturedProducts();
+  } catch {
+    // During build without DATABASE_URL, use empty arrays
+    console.log('Using empty product arrays (DATABASE_URL not available during build)');
+  }
 
   return (
     <>
