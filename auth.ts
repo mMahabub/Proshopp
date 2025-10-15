@@ -1,5 +1,4 @@
 import NextAuth, { type DefaultSession } from 'next-auth'
-import { PrismaAdapter } from '@auth/prisma-adapter'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 import GitHubProvider from 'next-auth/providers/github'
@@ -38,7 +37,8 @@ const signInSchema = z.object({
 })
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  // Note: adapter removed - not needed with JWT strategy
+  // PrismaAdapter only required for database session strategy
 
   session: {
     strategy: 'jwt',
