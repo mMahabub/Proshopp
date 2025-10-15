@@ -14729,3 +14729,208 @@ git push origin main
 **Implementation:** Deep Teal + Coral Color Scheme  
 **Test Status:** ✅ All tests passing  
 **Build Status:** ✅ Production build successful (33/33 routes)
+
+---
+
+### 16. Prisma Client Lazy Initialization (January 2025)
+
+**Problem**: Netlify build failing with database connection errors during build phase
+
+**Root Cause**:
+- `db/prisma.ts` was creating database connection pool at module load time
+- Next.js imports all modules during build process
+- Build tried to connect to database when `DATABASE_URL` wasn't set
+- Neon Pool and PrismaClient adapter initialized immediately on import
+
+**Solution Implemented**: Proxy-based lazy initialization for Prisma Client
+
+**Before** (`db/prisma.ts` - lines 6-17):
+```typescript
+// Sets up WebSocket connections
+neonConfig.webSocketConstructor = ws;
+const connectionString = `${process.env.DATABASE_URL}`;
+
+// Creates connection pool - EXECUTES AT MODULE LOAD TIME
+const pool = new Pool({ connectionString });
+
+// Instantiates adapter
+const adapter = new PrismaNeon(pool);
+
+// Creates PrismaClient with adapter - EXECUTES AT MODULE LOAD TIME
+export const prisma = new PrismaClient({ adapter }).$extends({
+  result: {
+    product: {
+      price: { compute(product) { return product.price.toString(); } },
+      rating: { compute(product) { return product.rating.toString(); } },
+    },
+  },
+});
+```
+
+**After** (`db/prisma.ts` - lines 6-79):
+```typescript
+let prismaInstance: ReturnType<typeof createPrismaClient> | null = null;
+
+function createPrismaClient() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error(
+      'DATABASE_URL is not defined in environment variables. ' +
+      'Database functionality requires a valid connection string.'
+    );
+  }
+
+  neonConfig.webSocketConstructor = ws;
+  const connectionString = `${process.env.DATABASE_URL}`;
+  const pool = new Pool({ connectionString });
+  const adapter = new PrismaNeon(pool);
+
+  return new PrismaClient({ adapter }).$extends({
+    result: {
+      product: {
+        price: { compute(product) { return product.price.toString(); } },
+        rating: { compute(product) { return product.rating.toString(); } },
+      },
+    },
+  });
+}
+
+function getPrismaClient() {
+  if (!prismaInstance) {
+    prismaInstance = createPrismaClient();
+  }
+  return prismaInstance;
+}
+
+export const prisma = new Proxy({} as ReturnType<typeof createPrismaClient>, {
+  get: (target, prop) => {
+    const instance = getPrismaClient();
+    const value = instance[prop as keyof typeof instance];
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+});
+```
+
+**Key Benefits**:
+- ✅ Build succeeds without DATABASE_URL environment variable
+- ✅ Database connection only created when Prisma is actually used
+- ✅ Singleton pattern ensures single connection pool
+- ✅ Maintains all custom result transformers (price, rating)
+- ✅ Same API surface - no code changes needed in consuming code
+- ✅ Function binding preserves correct `this` context for methods
+- ✅ Platform-agnostic deployment (works on all hosting providers)
+
+**Files Modified**:
+- `db/prisma.ts` (refactored 33 lines → 79 lines)
+
+**Testing Results**:
+- TypeScript compilation: ✅ No errors
+- Production build without DATABASE_URL: ✅ Success (33 pages compiled)
+- No database connection errors during build: ✅
+- Prisma queries work correctly at runtime: ✅
+- Custom result transformers functional: ✅
+
+**Deployment Notes**:
+- **Netlify**: Build will now succeed even without database access during build
+- **Environment Variables**: DATABASE_URL still required for runtime database operations
+- **Build vs Runtime**: Error only thrown when database operations are executed
+- **Clear Errors**: Runtime error guides developers to set DATABASE_URL
+
+---
+
+### 17. Auth.js Optional OAuth Providers (January 2025)
+
+**Problem**: Netlify build failing with TypeScript non-null assertion errors for OAuth credentials
+
+**Root Cause**:
+- `auth.ts` used non-null assertion operator (`!`) for OAuth client IDs/secrets
+- TypeScript would error if environment variables were undefined
+- NextAuth would try to initialize providers with undefined credentials
+- Build required all OAuth credentials even if not using those providers
+
+**Solution Implemented**: Conditional provider inclusion using spread operator
+
+**Before** (`auth.ts` - lines 106-117):
+```typescript
+providers: [
+  CredentialsProvider({ /* ... */ }),
+
+  // Google OAuth - ALWAYS INCLUDED
+  GoogleProvider({
+    clientId: process.env.GOOGLE_CLIENT_ID!,  // ❌ Non-null assertion
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    allowDangerousEmailAccountLinking: true,
+  }),
+
+  // GitHub OAuth - ALWAYS INCLUDED
+  GitHubProvider({
+    clientId: process.env.GITHUB_CLIENT_ID!,  // ❌ Non-null assertion
+    clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    allowDangerousEmailAccountLinking: true,
+  }),
+],
+```
+
+**After** (`auth.ts` - lines 106-126):
+```typescript
+providers: [
+  CredentialsProvider({ /* ... */ }),
+
+  // Google OAuth - CONDITIONALLY INCLUDED
+  ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+    ? [
+        GoogleProvider({
+          clientId: process.env.GOOGLE_CLIENT_ID,  // ✅ No assertion
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          allowDangerousEmailAccountLinking: true,
+        }),
+      ]
+    : []),
+
+  // GitHub OAuth - CONDITIONALLY INCLUDED
+  ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
+    ? [
+        GitHubProvider({
+          clientId: process.env.GITHUB_CLIENT_ID,  // ✅ No assertion
+          clientSecret: process.env.GITHUB_CLIENT_SECRET,
+          allowDangerousEmailAccountLinking: true,
+        }),
+      ]
+    : []),
+],
+```
+
+**Key Benefits**:
+- ✅ Build succeeds without OAuth credentials configured
+- ✅ OAuth providers only added if credentials are set
+- ✅ No TypeScript non-null assertion errors
+- ✅ Credentials provider always available (email/password)
+- ✅ Flexible deployment (can enable OAuth later)
+- ✅ No NextAuth initialization errors for missing credentials
+
+**Pattern Explanation**:
+```typescript
+// Spread operator conditionally adds array items
+...(condition ? [item1, item2] : [])
+
+// If condition true: spreads items into parent array
+// If condition false: spreads empty array (adds nothing)
+```
+
+**Files Modified**:
+- `auth.ts` (OAuth providers section, lines 106-126)
+
+**Testing Results**:
+- TypeScript compilation: ✅ No non-null assertion errors
+- Production build without OAuth credentials: ✅ Success
+- Credentials provider functional: ✅
+- OAuth providers functional when credentials set: ✅
+- Sign-in page shows only available providers: ✅
+
+**Deployment Notes**:
+- **Minimum Required**: Only DATABASE_URL needed for basic auth
+- **OAuth Optional**: Can deploy without Google/GitHub OAuth
+- **Add OAuth Later**: Set credentials and rebuild to enable
+- **Environment Variables**:
+  - Required: DATABASE_URL, NEXTAUTH_SECRET
+  - Optional: GOOGLE_CLIENT_ID/SECRET, GITHUB_CLIENT_ID/SECRET
+
