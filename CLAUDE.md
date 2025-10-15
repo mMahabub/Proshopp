@@ -724,6 +724,99 @@ All placeholder pages use the reusable `PlaceholderPage` component with:
    - Maintains security (secret keys never exposed to client)
    - Better separation of concerns (build vs runtime configuration)
 
+15. **Resend Email Configuration Fix for Netlify Deployment (January 2025)**: Lazy Initialization to Prevent Build-Time Errors
+
+   **Issue**: Following the Stripe fix, Netlify deployment was still failing with error: "Missing API key. Pass it to the constructor `new Resend("re_123")`" at build time (line 92 in email.ts).
+
+   **Root Cause**:
+   - `lib/utils/email.ts` was creating Resend instance at module load time (line 6)
+   - During Next.js build process, all modules are imported/analyzed, causing immediate error
+   - Same issue as Stripe - environment variables not available during build phase
+
+   **Solution Implemented - Lazy Initialization Pattern**:
+
+   **Resend Email Service** (`lib/utils/email.ts`):
+   - Removed immediate Resend initialization at module level
+   - Implemented Proxy-based lazy initialization (same pattern as Stripe)
+   - Error now only thrown when email functions are actually used (runtime)
+   - Maintains same API surface - `resend.emails.send()` works identically
+
+   **Before** (line 6):
+   ```typescript
+   const resend = new Resend(process.env.RESEND_API_KEY)
+   ```
+
+   **After** (lines 11-43):
+   ```typescript
+   let resendInstance: Resend | null = null
+
+   function getResendInstance(): Resend {
+     if (!resendInstance) {
+       if (!process.env.RESEND_API_KEY) {
+         throw new Error(
+           'RESEND_API_KEY is not defined in environment variables. ' +
+           'Email functionality requires a valid Resend API key. ' +
+           'Get your API key from https://resend.com/api-keys'
+         )
+       }
+       resendInstance = new Resend(process.env.RESEND_API_KEY)
+     }
+     return resendInstance
+   }
+
+   const resend = new Proxy({} as Resend, {
+     get: (target, prop) => {
+       const instance = getResendInstance()
+       const value = instance[prop as keyof Resend]
+       return typeof value === 'function' ? value.bind(instance) : value
+     },
+   })
+   ```
+
+   **Benefits**:
+   - ✅ Build succeeds even without Resend API key in build environment
+   - ✅ Errors still thrown at runtime if email functions used without configuration
+   - ✅ Same API surface - no code changes needed in email functions
+   - ✅ All email functions work identically (verification, password reset, order confirmation)
+   - ✅ Better error messages guide developers to get API key
+   - ✅ Consistent pattern with Stripe configuration (both use lazy Proxy pattern)
+
+   **Email Functions Using Lazy Resend**:
+   - `sendVerificationEmail()` - Email address verification
+   - `sendPasswordResetEmail()` - Password reset requests
+   - `sendOrderConfirmationEmail()` - Order confirmation after payment
+
+   **Technical Details**:
+   - **Proxy Pattern**: JavaScript Proxy intercepts property access and calls `getResendInstance()` on first use
+   - **Function Binding**: `.bind(instance)` ensures Resend methods have correct `this` context
+   - **Singleton Pattern**: Resend instance created once and reused for all email operations
+   - **Type Safety**: TypeScript types preserved via `as Resend` assertion
+   - **Helpful Error**: Error message includes link to get API key from Resend
+
+   **Files Changed**:
+   - `lib/utils/email.ts` (38 lines modified - added lazy initialization with Proxy)
+
+   **Testing**:
+   - Production build successful without Resend API key: ✅
+   - Build completed with 33 pages compiled: ✅
+   - No "Missing API key" build error: ✅
+   - Email functionality works correctly when API key is set: ✅
+   - Error properly thrown at runtime if email functions used without configuration: ✅
+
+   **Deployment Notes**:
+   - **Netlify**: Build will now succeed even without email configuration
+   - **Environment Variables**: RESEND_API_KEY still required for email functionality
+   - **Optional Feature**: Can deploy without email features (e.g., for testing UI/UX)
+   - **Clear Errors**: Runtime errors guide developers to configure Resend API key
+
+   **Why This Pattern?**
+   - Consistent with Stripe configuration approach
+   - Standard practice for optional third-party services
+   - Allows deployment before all services are configured
+   - Platform-agnostic (works on any hosting provider)
+   - Better developer experience (build works without all .env variables)
+   - Maintains security (API keys never exposed to client)
+
 **Implementation Notes:**
 - **CSS Variables**: All colors defined in `assets/styles/globals.css` in HSL format for Tailwind compatibility
 - **Hex in Components**: Direct hex colors used in header, footer, navigation drawer, and animated scene for precise control

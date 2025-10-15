@@ -3,7 +3,44 @@ import { prisma } from '@/db/prisma'
 import { APP_NAME } from '@/lib/constants'
 import crypto from 'crypto'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+/**
+ * Lazy initialization of Resend instance
+ * This prevents build errors when RESEND_API_KEY is not set
+ * The error will only be thrown at runtime when email functions are actually used
+ */
+let resendInstance: Resend | null = null
+
+/**
+ * Get or create the Resend instance for email operations
+ * - Uses API key from environment variables
+ * - Lazy initialization prevents build-time errors
+ * - Error thrown only at runtime if API key is missing
+ */
+function getResendInstance(): Resend {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error(
+        'RESEND_API_KEY is not defined in environment variables. ' +
+        'Email functionality requires a valid Resend API key. ' +
+        'Get your API key from https://resend.com/api-keys'
+      )
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resendInstance
+}
+
+/**
+ * Resend instance configured for email operations
+ * Uses lazy initialization to prevent build-time errors
+ */
+const resend = new Proxy({} as Resend, {
+  get: (target, prop) => {
+    const instance = getResendInstance()
+    const value = instance[prop as keyof Resend]
+    return typeof value === 'function' ? value.bind(instance) : value
+  },
+})
 
 /**
  * Generate a secure random verification token
