@@ -49,6 +49,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // Note: adapter removed - not needed with JWT strategy
   // PrismaAdapter only required for database session strategy
 
+  // Trust host header for serverless deployments (Netlify, Vercel, etc.)
+  trustHost: true,
+
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -68,45 +71,64 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // Validate credentials
-        const parsedCredentials = signInSchema.safeParse(credentials)
+        try {
+          // Validate credentials
+          const parsedCredentials = signInSchema.safeParse(credentials)
 
-        if (!parsedCredentials.success) {
-          throw new Error('Invalid credentials')
-        }
+          if (!parsedCredentials.success) {
+            console.error('[AUTH] Invalid credentials format:', parsedCredentials.error)
+            throw new Error('Invalid credentials')
+          }
 
-        const { email, password } = parsedCredentials.data
+          const { email, password } = parsedCredentials.data
+          console.log('[AUTH] Attempting to authenticate user:', email)
 
-        // Find user by email
-        const user = await prisma.user.findUnique({
-          where: { email },
-        })
+          // Find user by email with error handling
+          let user
+          try {
+            user = await prisma.user.findUnique({
+              where: { email },
+            })
+          } catch (dbError) {
+            console.error('[AUTH] Database error during user lookup:', dbError)
+            throw new Error('Database connection failed. Please try again later.')
+          }
 
-        if (!user || !user.password) {
-          throw new Error('Invalid email or password')
-        }
+          if (!user || !user.password) {
+            console.log('[AUTH] User not found or no password set:', email)
+            throw new Error('Invalid email or password')
+          }
 
-        // Check if email is verified
-        if (!user.emailVerified) {
-          throw new Error(
-            'Please verify your email address before signing in. Check your inbox for the verification link.'
-          )
-        }
+          // Check if email is verified
+          if (!user.emailVerified) {
+            console.log('[AUTH] Email not verified:', email)
+            throw new Error(
+              'Please verify your email address before signing in. Check your inbox for the verification link.'
+            )
+          }
 
-        // Verify password
-        const isPasswordValid = compareSync(password, user.password)
+          // Verify password
+          const isPasswordValid = compareSync(password, user.password)
 
-        if (!isPasswordValid) {
-          throw new Error('Invalid email or password')
-        }
+          if (!isPasswordValid) {
+            console.log('[AUTH] Invalid password for user:', email)
+            throw new Error('Invalid email or password')
+          }
 
-        // Return user object
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          role: user.role,
+          console.log('[AUTH] Authentication successful for user:', email)
+          // Return user object
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+          }
+        } catch (error) {
+          // Log the full error for debugging
+          console.error('[AUTH] Authorization error:', error)
+          // Re-throw with user-friendly message
+          throw error
         }
       },
     }),
@@ -167,31 +189,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     // Sign-in Callback - runs on sign-in attempt
     async signIn({ user, account }) {
-      // For OAuth providers, ensure email is verified
-      if (account?.provider === 'google' || account?.provider === 'github') {
-        if (!user.email) {
-          return false
+      try {
+        // For OAuth providers, ensure email is verified
+        if (account?.provider === 'google' || account?.provider === 'github') {
+          if (!user.email) {
+            console.error('[AUTH] OAuth sign-in: No email provided')
+            return false
+          }
+
+          // Check if user exists with error handling
+          try {
+            const existingUser = await prisma.user.findUnique({
+              where: { email: user.email },
+            })
+
+            // If user exists but emailVerified is null, set it to current time
+            // (OAuth providers have already verified the email)
+            if (existingUser && !existingUser.emailVerified) {
+              await prisma.user.update({
+                where: { email: user.email },
+                data: { emailVerified: new Date() },
+              })
+              console.log('[AUTH] OAuth sign-in: Email verified for user:', user.email)
+            }
+          } catch (dbError) {
+            console.error('[AUTH] OAuth sign-in: Database error:', dbError)
+            // Allow sign-in to continue even if verification update fails
+          }
+
+          return true
         }
 
-        // Check if user exists
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email },
-        })
-
-        // If user exists but emailVerified is null, set it to current time
-        // (OAuth providers have already verified the email)
-        if (existingUser && !existingUser.emailVerified) {
-          await prisma.user.update({
-            where: { email: user.email },
-            data: { emailVerified: new Date() },
-          })
-        }
-
+        // For credentials provider, user must exist and be verified
+        return true
+      } catch (error) {
+        console.error('[AUTH] Sign-in callback error:', error)
+        // Allow sign-in to continue even if there's an error
         return true
       }
-
-      // For credentials provider, user must exist and be verified
-      return true
     },
   },
 
