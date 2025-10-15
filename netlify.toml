@@ -1,0 +1,37 @@
+# Netlify Build Configuration for Next.js 15
+
+[build]
+  # Build command
+  command = "npm run build"
+  
+  # Publish directory (Next.js outputs to .next)
+  publish = ".next"
+  
+  # Functions directory for serverless functions
+  functions = "netlify/functions"
+
+[build.environment]
+  # Node.js version
+  NODE_VERSION = "20"
+  
+  # Enable experimental features if needed
+  # NEXT_TELEMETRY_DISABLED = "1"
+
+# Next.js specific plugin
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Redirect rules for Next.js
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"

@@ -6,6 +6,15 @@ import { prisma } from '@/db/prisma'
 import { compareSync } from 'bcrypt-ts-edge'
 import { z } from 'zod'
 
+// Validate required environment variables
+if (!process.env.AUTH_SECRET) {
+  throw new Error(
+    'AUTH_SECRET is not defined in environment variables. ' +
+    'This is required for NextAuth to work properly. ' +
+    'Generate one with: npx auth secret'
+  )
+}
+
 // Extend the built-in session types
 declare module 'next-auth' {
   interface Session {
